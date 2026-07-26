@@ -1,0 +1,14 @@
+/* Jedno źródło prawdy dla kolorów i odstępów */
+:root {
+  --surface: #14161c;
+  --surface-2: #1d2029;
+  --die-attack: #e08a2e;
+  --die-heal: #3fa663;
+  --die-shield: #3d8cd6;
+  --player: #8fc93a;
+  --enemy: #d1414a;
+  --boss: #7d2a8f;
+  --ink: #f2efe6;
+
+  --gap: 0.75rem;
+}

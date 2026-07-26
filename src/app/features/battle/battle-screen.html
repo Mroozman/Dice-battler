@@ -1,0 +1,64 @@
+<div class="battle-screen">
+  <!-- Lewa kolumna: talia / pula kości (§9, §16 DeckPanel) -->
+  <aside class="zone deck" style="grid-area: deck">
+    <h2 class="zone-title">Talia</h2>
+    <ul class="die-list">
+      <li class="die die--attack">D6</li>
+      <li class="die die--attack">D6</li>
+      <li class="die die--attack">D4</li>
+      <li class="die die--attack">D4</li>
+      <li class="die die--heal">D4</li>
+      <li class="die die--shield">D4</li>
+      <li class="die die--attack die--discard">D6</li>
+      <li class="die die--attack die--discard">D4</li>
+    </ul>
+  </aside>
+
+  <!-- Środek: plansza — wrogowie, biały kwadrat, gracz -->
+  <section class="zone board" style="grid-area: board">
+    <header class="board-header">
+      <span class="stage-label">Etap 1 / 4</span>
+    </header>
+
+    <div class="enemy-row">
+      <article class="combatant-card combatant-card--enemy">
+        <span class="combatant-name">Rdzawy Padlinożerca</span>
+        <div class="hp-bar"><div class="hp-bar-fill" style="width: 70%"></div></div>
+        <span class="hp-label">5 / 7</span>
+      </article>
+      <article class="combatant-card combatant-card--enemy">
+        <span class="combatant-name">Zgniły Zbir</span>
+        <div class="hp-bar"><div class="hp-bar-fill" style="width: 85%"></div></div>
+        <span class="hp-label">8 / 9</span>
+      </article>
+    </div>
+
+    <div class="die-stage">
+      <span class="die-stage-value">—</span>
+    </div>
+
+    <article class="combatant-card combatant-card--player">
+      <span class="combatant-name">Gracz</span>
+      <div class="hp-bar"><div class="hp-bar-fill" style="width: 100%"></div></div>
+      <span class="hp-label">20 / 20</span>
+    </article>
+  </section>
+
+  <!-- Prawa kolumna: log walki, kolorowany wg tone -->
+  <aside class="zone log" style="grid-area: log">
+    <h2 class="zone-title">Log walki</h2>
+    <ul class="log-list">
+      <li class="log-entry log-entry--attack">Gracz rzuca D6 → 4 obrażeń w Padlinożercę</li>
+      <li class="log-entry log-entry--heal">Gracz rzuca D4 → leczy się o 3</li>
+      <li class="log-entry log-entry--shield">Zbir rzuca D4 → +2 osłony</li>
+      <li class="log-entry log-entry--system">Runda 1 rozpoczęta</li>
+    </ul>
+  </aside>
+
+  <!-- Dół: ręka gracza — 3 kości do wyboru -->
+  <footer class="zone hand" style="grid-area: hand">
+    <button type="button" class="die die--hand die--attack">D8</button>
+    <button type="button" class="die die--hand die--attack">D6</button>
+    <button type="button" class="die die--hand die--heal">D4</button>
+  </footer>
+</div>

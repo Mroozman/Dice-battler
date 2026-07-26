@@ -1,0 +1,11 @@
+/* You can add global styles to this file, and also import other style files */
+
+@import 'tailwindcss';
+@import './styles/tokens.css';
+
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
