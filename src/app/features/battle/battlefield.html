@@ -1,0 +1,14 @@
+<div class="battlefield">
+  <div class="enemy-row">
+    @for (enemy of enemies(); track enemy.id; let i = $index) {
+      <div class="enemy-slot">
+        <span class="enemy-number">{{ i + 1 }}</span>
+        <app-combatant-card [combatant]="enemy" [state]="enemyState(enemy)" (picked)="onEnemyPicked(enemy.id)" />
+      </div>
+    }
+  </div>
+
+  <app-die-stage [staged]="staged()" />
+
+  <app-combatant-card [combatant]="player()" />
+</div>
