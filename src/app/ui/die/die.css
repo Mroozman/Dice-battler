@@ -1,0 +1,48 @@
+.die {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-width: 2.75rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.4rem;
+  border: 2px solid transparent;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.die:disabled {
+  cursor: default;
+}
+
+.die--attack {
+  background: color-mix(in srgb, var(--die-attack) 35%, var(--surface-2));
+}
+
+.die--heal {
+  background: color-mix(in srgb, var(--die-heal) 35%, var(--surface-2));
+}
+
+.die--shield {
+  background: color-mix(in srgb, var(--die-shield) 35%, var(--surface-2));
+}
+
+.die--hand {
+  border-color: var(--ink);
+}
+
+.die--selected {
+  outline: 2px solid var(--player);
+  outline-offset: 2px;
+}
+
+.die--discard {
+  filter: saturate(0.3);
+  opacity: 0.45;
+}
+
+.die-icon {
+  font-size: 0.85em;
+}

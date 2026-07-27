@@ -1,0 +1,15 @@
+<button
+  type="button"
+  class="die"
+  [class.die--attack]="def().kind === 'attack'"
+  [class.die--heal]="def().kind === 'heal'"
+  [class.die--shield]="def().kind === 'shield'"
+  [class.die--selected]="selected()"
+  [class.die--discard]="status() === 'discard'"
+  [class.die--hand]="status() === 'hand'"
+  [disabled]="!interactive()"
+  (click)="onClick()"
+>
+  <span class="die-icon" aria-hidden="true">{{ icon() }}</span>
+  <span class="die-label">{{ def().label }}</span>
+</button>
