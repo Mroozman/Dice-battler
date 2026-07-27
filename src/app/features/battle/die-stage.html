@@ -1,0 +1,10 @@
+@let s = staged();
+<div
+  class="die-stage"
+  [class.die-stage--attack]="s?.kind === 'attack'"
+  [class.die-stage--heal]="s?.kind === 'heal'"
+  [class.die-stage--shield]="s?.kind === 'shield'"
+  [class.die-stage--rolling]="s !== null && s.value === null"
+>
+  <span class="die-stage-value">{{ display() }}</span>
+</div>

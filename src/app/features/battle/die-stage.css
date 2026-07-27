@@ -1,0 +1,33 @@
+.die-stage {
+  width: 6rem;
+  height: 6rem;
+  background: var(--ink);
+  color: var(--surface);
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  transition: background-color 0.2s ease-out;
+}
+
+.die-stage--attack {
+  background: var(--die-attack);
+  color: var(--ink);
+}
+
+.die-stage--heal {
+  background: var(--die-heal);
+  color: var(--ink);
+}
+
+.die-stage--shield {
+  background: var(--die-shield);
+  color: var(--ink);
+}
+
+.die-stage--rolling {
+  opacity: 0.6;
+}
