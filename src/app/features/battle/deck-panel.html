@@ -1,0 +1,12 @@
+<ul class="deck-panel">
+  @for (entry of entries(); track entry.def.id) {
+    <li>
+      <app-die
+        [def]="entry.def"
+        [status]="entry.status"
+        [interactive]="isInteractive()"
+        (activated)="onActivate(entry.def.id)"
+      />
+    </li>
+  }
+</ul>
