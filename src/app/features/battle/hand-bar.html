@@ -1,0 +1,14 @@
+<div class="hand-bar">
+  @for (def of hand(); track def.id) {
+    <app-die
+      [def]="def"
+      [status]="handStatus"
+      [selected]="isSelected(def.id)"
+      [interactive]="isSelectable(def.id)"
+      (activated)="onToggle(def.id)"
+    />
+  }
+  <button type="button" class="hand-bar-confirm" [disabled]="!canConfirm()" (click)="onConfirm()">
+    Potwierdź
+  </button>
+</div>

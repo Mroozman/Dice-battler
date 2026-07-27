@@ -5,11 +5,10 @@ function selectFullHand(store: GameStore): void {
   const battle = store.state().battle!;
   const chosen = store.hand().slice(0, battle.player.dicePerTurn);
 
-  for (const dieId of chosen) {
-    store.dispatch({ type: 'player/toggleDie', dieId });
-    const kind = battle.player.deck.catalog[dieId].kind;
-    if (kind === 'attack') {
-      store.dispatch({ type: 'player/setTarget', dieId, targetId: store.targetableIds()[0] });
+  for (const def of chosen) {
+    store.dispatch({ type: 'player/toggleDie', dieId: def.id });
+    if (def.kind === 'attack') {
+      store.dispatch({ type: 'player/setTarget', dieId: def.id, targetId: store.targetableIds()[0] });
     }
   }
 }

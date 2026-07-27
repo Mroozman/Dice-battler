@@ -1,0 +1,21 @@
+.hand-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.hand-bar-confirm {
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.4rem;
+  border: none;
+  background: var(--player);
+  color: var(--surface);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hand-bar-confirm:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

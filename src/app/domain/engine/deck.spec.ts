@@ -1,5 +1,5 @@
 import { createRng } from './rng';
-import { assertDeckInvariant, buildBattleDeck, deckView, discardUsed, draw, minDeckSize } from './deck';
+import { assertDeckInvariant, buildBattleDeck, deckView, discardUsed, draw, handView, minDeckSize } from './deck';
 import type { Deck } from '../model/deck';
 import type { DieDef, DieId } from '../model/die';
 
@@ -156,5 +156,19 @@ describe('deckView', () => {
     const order = deckView(deck).map((entry) => entry.def.id);
 
     expect(order).toEqual(['b', 'c', 'a', 'd']);
+  });
+});
+
+describe('handView', () => {
+  it('resolves the hand ids to their die definitions, preserving hand order', () => {
+    const catalog = makeCatalog(5);
+    const deck = buildBattleDeck(catalog, 3, 2, createRng('deck-seed'));
+
+    const view = handView(deck);
+
+    expect(view.map((def) => def.id)).toEqual(deck.hand);
+    for (const def of view) {
+      expect(def).toBe(catalog[def.id]);
+    }
   });
 });

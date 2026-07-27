@@ -77,6 +77,10 @@ export function draw(deck: Deck, count: number, rng: Rng): DrawResult {
   };
 }
 
+export function handView(deck: Deck): readonly DieDef[] {
+  return deck.hand.map((id) => deck.catalog[id]);
+}
+
 export type DieStatus = 'pool' | 'hand' | 'discard';
 
 export interface DeckViewEntry {
