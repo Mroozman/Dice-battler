@@ -1,0 +1,14 @@
+<div class="health-bar" role="img" [attr.aria-label]="ariaLabel()">
+  <div class="health-bar-track">
+    <div class="health-bar-hp" [style.width.%]="hpPercent()"></div>
+    @if (shield() > 0) {
+      <div class="health-bar-shield" [style.width.%]="shieldPercent()"></div>
+    }
+  </div>
+  <span class="health-bar-label">
+    {{ hp() }} / {{ maxHp() }}
+    @if (shield() > 0) {
+      <span class="health-bar-shield-label">+{{ shield() }}</span>
+    }
+  </span>
+</div>

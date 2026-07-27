@@ -1,0 +1,21 @@
+<button
+  type="button"
+  class="combatant-card"
+  [class.combatant-card--player]="combatant().kind === 'player'"
+  [class.combatant-card--enemy]="combatant().kind === 'enemy'"
+  [class.combatant-card--targetable]="state() === 'targetable'"
+  [class.combatant-card--selected]="state() === 'selected'"
+  [class.combatant-card--hurt]="state() === 'hurt'"
+  [class.combatant-card--dead]="state() === 'dead'"
+  [class.combatant-card--acting]="state() === 'acting'"
+  [disabled]="state() !== 'targetable'"
+  (click)="onClick()"
+>
+  <span class="combatant-name">{{ combatant().name }}</span>
+  <app-health-bar
+    [style.--hp-fill-color]="combatant().kind === 'player' ? 'var(--player)' : 'var(--enemy)'"
+    [hp]="combatant().hp"
+    [maxHp]="combatant().maxHp"
+    [shield]="combatant().shield"
+  />
+</button>

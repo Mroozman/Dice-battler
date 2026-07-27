@@ -1,0 +1,40 @@
+.health-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.health-bar-track {
+  position: relative;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.health-bar-hp {
+  position: absolute;
+  inset: 0;
+  width: 0;
+  background: var(--hp-fill-color, var(--enemy));
+  transition: width 0.2s ease-out;
+}
+
+.health-bar-shield {
+  position: absolute;
+  inset: 0;
+  width: 0;
+  background: color-mix(in srgb, var(--die-shield) 55%, transparent);
+  transition: width 0.2s ease-out;
+}
+
+.health-bar-label {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.health-bar-shield-label {
+  color: var(--die-shield);
+  margin-left: 0.35rem;
+}

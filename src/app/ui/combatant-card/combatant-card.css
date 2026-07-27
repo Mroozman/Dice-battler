@@ -1,0 +1,53 @@
+.combatant-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  background: var(--surface);
+  border: 2px solid transparent;
+  min-width: 9rem;
+  color: var(--ink);
+  cursor: default;
+}
+
+.combatant-card--player {
+  border-color: color-mix(in srgb, var(--player) 50%, transparent);
+}
+
+.combatant-card--enemy {
+  border-color: color-mix(in srgb, var(--enemy) 50%, transparent);
+}
+
+.combatant-card--targetable {
+  cursor: pointer;
+}
+
+.combatant-card--targetable:hover {
+  border-color: var(--enemy);
+}
+
+.combatant-card--selected {
+  border-color: var(--player);
+  outline: 2px solid var(--player);
+  outline-offset: 2px;
+}
+
+.combatant-card--acting {
+  border-color: var(--boss);
+}
+
+.combatant-card--hurt {
+  border-color: var(--enemy);
+  background: color-mix(in srgb, var(--enemy) 20%, var(--surface));
+}
+
+.combatant-card--dead {
+  opacity: 0.4;
+  filter: saturate(0.3);
+}
+
+.combatant-name {
+  font-weight: 600;
+}
