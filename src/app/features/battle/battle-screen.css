@@ -4,7 +4,7 @@
   grid-template-rows: minmax(0, 1fr) auto;
   grid-template-areas:
     'deck board log'
-    'deck hand log';
+    'deck hand  log';
   gap: var(--gap);
   height: 100dvh;
   padding: var(--gap);
@@ -27,159 +27,14 @@
   opacity: 0.7;
 }
 
-/* Talia */
-.die-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.die {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 2.5rem;
-  height: 2.5rem;
-  padding: 0 0.5rem;
-  border-radius: 0.4rem;
-  font-weight: 600;
-  color: var(--ink);
-  border: none;
-}
-
-.die--attack {
-  background: var(--die-attack);
-}
-.die--heal {
-  background: var(--die-heal);
-}
-.die--shield {
-  background: var(--die-shield);
-}
-.die--discard {
-  opacity: 0.45;
-  filter: saturate(0.4);
-}
-.die--hand {
-  height: 3.5rem;
-  min-width: 3.5rem;
-  font-size: 1.1rem;
-  cursor: pointer;
-}
-
-/* Plansza */
 .board {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 1rem;
-}
-
-.board-header {
-  align-self: stretch;
-  text-align: center;
-}
-
-.stage-label {
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-.enemy-row {
-  display: flex;
-  gap: 1rem;
   justify-content: center;
-  flex-wrap: wrap;
-}
-
-.combatant-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  background: var(--surface);
-  border: 1px solid color-mix(in srgb, var(--enemy) 50%, transparent);
-  min-width: 9rem;
-}
-
-.combatant-card--player {
-  border-color: color-mix(in srgb, var(--player) 50%, transparent);
-}
-
-.hp-bar {
-  width: 100%;
-  height: 0.5rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--ink) 15%, transparent);
-  overflow: hidden;
-}
-
-.hp-bar-fill {
   height: 100%;
-  background: var(--player);
 }
 
-.combatant-card--enemy .hp-bar-fill {
-  background: var(--enemy);
-}
-
-.hp-label {
-  font-size: 0.8rem;
-  opacity: 0.8;
-}
-
-.die-stage {
-  width: 6rem;
-  height: 6rem;
-  background: var(--ink);
-  color: var(--surface);
-  border-radius: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-  font-weight: 700;
-}
-
-/* Log */
-.log-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+.log-placeholder {
   font-size: 0.85rem;
-}
-
-.log-entry {
-  padding-left: 0.5rem;
-  border-left: 3px solid var(--ink);
-}
-
-.log-entry--attack {
-  border-color: var(--die-attack);
-}
-.log-entry--heal {
-  border-color: var(--die-heal);
-}
-.log-entry--shield {
-  border-color: var(--die-shield);
-}
-.log-entry--system {
-  border-color: color-mix(in srgb, var(--ink) 40%, transparent);
-  opacity: 0.7;
-}
-
-/* Ręka */
-.hand {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-  justify-content: center;
+  opacity: 0.6;
 }

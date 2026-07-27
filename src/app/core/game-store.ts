@@ -14,6 +14,8 @@ export class GameStore {
   private readonly rules = inject(RULES);
   private readonly _state = signal<GameState>(createDevGameState(this.rules));
 
+  readonly dicePerTurn = this.rules.dicePerTurn;
+
   readonly state = this._state.asReadonly();
   readonly screen = computed(() => this._state().screen);
   readonly battle = computed(() => this._state().battle);
