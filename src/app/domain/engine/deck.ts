@@ -77,6 +77,31 @@ export function draw(deck: Deck, count: number, rng: Rng): DrawResult {
   };
 }
 
+export type DieStatus = 'pool' | 'hand' | 'discard';
+
+export interface DeckViewEntry {
+  readonly def: DieDef;
+  readonly status: DieStatus;
+}
+
+function compareDieDef(a: DieDef, b: DieDef): number {
+  if (a.kind !== b.kind) return a.kind.localeCompare(b.kind);
+  if (a.sides !== b.sides) return a.sides - b.sides;
+  return a.id.localeCompare(b.id);
+}
+
+export function deckView(deck: Deck): readonly DeckViewEntry[] {
+  const statusById = new Map<DieId, DieStatus>();
+  for (const id of deck.pool) statusById.set(id, 'pool');
+  for (const id of deck.hand) statusById.set(id, 'hand');
+  for (const id of deck.discard) statusById.set(id, 'discard');
+
+  return Object.values(deck.catalog)
+    .slice()
+    .sort(compareDieDef)
+    .map((def) => ({ def, status: statusById.get(def.id)! }));
+}
+
 export function assertDeckInvariant(deck: Deck): void {
   const catalogSize = Object.keys(deck.catalog).length;
   const total = deck.pool.length + deck.hand.length + deck.discard.length;

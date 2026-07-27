@@ -1,5 +1,5 @@
 import { createRng } from './rng';
-import { assertDeckInvariant, buildBattleDeck, discardUsed, draw, minDeckSize } from './deck';
+import { assertDeckInvariant, buildBattleDeck, deckView, discardUsed, draw, minDeckSize } from './deck';
 import type { Deck } from '../model/deck';
 import type { DieDef, DieId } from '../model/die';
 
@@ -122,5 +122,39 @@ describe('assertDeckInvariant', () => {
     const broken: Deck = { ...deck, pool: deck.pool.slice(1) };
 
     expect(() => assertDeckInvariant(broken)).toThrow();
+  });
+});
+
+describe('deckView', () => {
+  it('tags every catalog entry with its current status', () => {
+    const catalog = makeCatalog(5);
+    const deck = buildBattleDeck(catalog, 3, 2, createRng('deck-seed'));
+
+    const view = deckView(deck);
+
+    expect(view.length).toBe(5);
+    for (const entry of view) {
+      const expectedStatus = deck.hand.includes(entry.def.id)
+        ? 'hand'
+        : deck.pool.includes(entry.def.id)
+          ? 'pool'
+          : 'discard';
+      expect(entry.status).toBe(expectedStatus);
+    }
+  });
+
+  it('sorts entries by kind, then sides, then id', () => {
+    const dice: DieDef[] = [
+      { id: 'a' as DieId, sides: 6, kind: 'heal', label: 'D6' },
+      { id: 'b' as DieId, sides: 4, kind: 'attack', label: 'D4' },
+      { id: 'c' as DieId, sides: 8, kind: 'attack', label: 'D8' },
+      { id: 'd' as DieId, sides: 6, kind: 'shield', label: 'D6' },
+    ];
+    const catalog = Object.fromEntries(dice.map((d) => [d.id, d]));
+    const deck: Deck = { catalog, pool: dice.map((d) => d.id), hand: [], discard: [] };
+
+    const order = deckView(deck).map((entry) => entry.def.id);
+
+    expect(order).toEqual(['b', 'c', 'a', 'd']);
   });
 });
