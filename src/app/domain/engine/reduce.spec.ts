@@ -606,3 +606,132 @@ describe('roll/apply — generalized to any actor (M3 point 4)', () => {
     expect(battleAfter.staged).toBeNull();
   });
 });
+
+describe('enemy/act', () => {
+  it('draws dicePerTurn dice, picks via policy, discards immediately, and stages the first roll', () => {
+    const atk = makeDie('atk', 'attack', 8);
+    const enemy = makeEnemy('e0', 8, { deck: makeDeck([atk], 0), dicePerTurn: 1 });
+    const player = makePlayer(makeDeck([], 0));
+    const battle = makeBattle(player, [enemy], { phase: 'enemy.acting' });
+    const state = makeState(battle);
+
+    const { state: next } = reduce(state, { type: 'enemy/act', enemyId: enemy.id }, RULES);
+    const battleAfter = next.battle!;
+    const enemyAfter = battleAfter.enemies[0];
+
+    expect(enemyAfter.deck.hand).toEqual([]);
+    expect(enemyAfter.deck.discard).toEqual([atk.id]);
+    expect(battleAfter.resolveQueue).toEqual([{ dieId: atk.id, targetId: player.id }]);
+    expect(battleAfter.activeCombatantId).toBe(enemy.id);
+    expect(battleAfter.phase).toBe('player.rolling');
+    expect(battleAfter.staged).toEqual({ dieId: atk.id, sides: 8, kind: 'attack', ownerId: enemy.id, value: null });
+  });
+
+  it('targets heal/shield dice at the acting enemy itself, never the player', () => {
+    const heal = makeDie('heal', 'heal', 4);
+    const enemy = makeEnemy('e0', 3, { maxHp: 10, deck: makeDeck([heal], 0), dicePerTurn: 1 });
+    const battle = makeBattle(makePlayer(makeDeck([], 0)), [enemy], { phase: 'enemy.acting' });
+    const state = makeState(battle);
+
+    const { state: next } = reduce(state, { type: 'enemy/act', enemyId: enemy.id }, RULES);
+
+    expect(next.battle!.resolveQueue).toEqual([{ dieId: heal.id, targetId: enemy.id }]);
+  });
+
+  it('handles a boss with dicePerTurn 2, choosing and queuing both dice via GreedyPolicy', () => {
+    const heal = makeDie('heal', 'heal');
+    const atk = makeDie('atk', 'attack', 12);
+    const boss = makeEnemy('boss', 3, { maxHp: 30, deck: makeDeck([atk, heal], 0), dicePerTurn: 2 });
+    const player = makePlayer(makeDeck([], 0));
+    const battle = makeBattle(player, [boss], { phase: 'enemy.acting' });
+    const state = makeState(battle);
+
+    const { state: next } = reduce(state, { type: 'enemy/act', enemyId: boss.id }, RULES);
+    const battleAfter = next.battle!;
+
+    expect(battleAfter.resolveQueue).toEqual([
+      { dieId: heal.id, targetId: boss.id },
+      { dieId: atk.id, targetId: player.id },
+    ]);
+    expect(battleAfter.enemies[0].deck.hand).toEqual([]);
+  });
+
+  it('emits deck/reshuffled when the enemy pool must be reshuffled from discard', () => {
+    const dice = [makeDie('a', 'attack'), makeDie('b', 'attack')];
+    const deck: Deck = {
+      catalog: Object.fromEntries(dice.map((d) => [d.id, d])),
+      hand: [],
+      pool: [],
+      discard: dice.map((d) => d.id),
+    };
+    const enemy = makeEnemy('e0', 8, { deck, dicePerTurn: 1 });
+    const battle = makeBattle(makePlayer(makeDeck([], 0)), [enemy], { phase: 'enemy.acting' });
+    const state = makeState(battle);
+
+    const { effects } = reduce(state, { type: 'enemy/act', enemyId: enemy.id }, RULES);
+
+    expect(effects).toEqual([{ type: 'deck/reshuffled' }]);
+  });
+
+  it('advances rngCursor deterministically so replay reproduces the same draw', () => {
+    const dice = ['a', 'b', 'c', 'd', 'e'].map((id) => makeDie(id, 'attack'));
+    const enemy = makeEnemy('e0', 8, { deck: makeDeck(dice, 0), dicePerTurn: 1 });
+    const battle = makeBattle(makePlayer(makeDeck([], 0)), [enemy], { phase: 'enemy.acting' });
+    const state = makeState(battle, { seed: 'replay-seed', rngCursor: 0 });
+
+    const { state: first } = reduce(state, { type: 'enemy/act', enemyId: enemy.id }, RULES);
+    const { state: second } = reduce(state, { type: 'enemy/act', enemyId: enemy.id }, RULES);
+
+    expect(first.battle!.resolveQueue).toEqual(second.battle!.resolveQueue);
+    expect(first.rngCursor).toBe(second.rngCursor);
+  });
+
+  it('throws outside enemy.acting', () => {
+    const enemy = makeEnemy('e0', 8, { deck: makeDeck([makeDie('a', 'attack')], 0) });
+    const state = makeState(makeBattle(makePlayer(makeDeck([], 0)), [enemy]));
+
+    expect(() => reduce(state, { type: 'enemy/act', enemyId: enemy.id }, RULES)).toThrow();
+  });
+
+  it('throws for a dead enemy', () => {
+    const enemy = makeEnemy('e0', 0, { deck: makeDeck([makeDie('a', 'attack')], 0) });
+    const battle = makeBattle(makePlayer(makeDeck([], 0)), [enemy], { phase: 'enemy.acting' });
+    const state = makeState(battle);
+
+    expect(() => reduce(state, { type: 'enemy/act', enemyId: enemy.id }, RULES)).toThrow();
+  });
+
+  it('throws when the id does not refer to an enemy', () => {
+    const player = makePlayer(makeDeck([], 0));
+    const enemy = makeEnemy('e0', 8, { deck: makeDeck([makeDie('a', 'attack')], 0) });
+    const battle = makeBattle(player, [enemy], { phase: 'enemy.acting' });
+    const state = makeState(battle);
+
+    expect(() => reduce(state, { type: 'enemy/act', enemyId: player.id }, RULES)).toThrow();
+  });
+});
+
+describe('turn/endRound', () => {
+  it('increments the round and returns control to the player', () => {
+    const enemy = makeEnemy('e0', 8, { deck: makeDeck([], 0) });
+    const battle = makeBattle(makePlayer(makeDeck([], 0)), [enemy], {
+      phase: 'enemy.acting',
+      round: 1,
+      activeCombatantId: enemy.id,
+    });
+    const state = makeState(battle);
+
+    const { state: next } = reduce(state, { type: 'turn/endRound' }, RULES);
+
+    expect(next.battle!.round).toBe(2);
+    expect(next.battle!.phase).toBe('player.selecting');
+    expect(next.battle!.activeCombatantId).toBe(battle.player.id);
+  });
+
+  it('throws outside enemy.acting', () => {
+    const enemy = makeEnemy('e0', 8, { deck: makeDeck([], 0) });
+    const state = makeState(makeBattle(makePlayer(makeDeck([], 0)), [enemy]));
+
+    expect(() => reduce(state, { type: 'turn/endRound' }, RULES)).toThrow();
+  });
+});

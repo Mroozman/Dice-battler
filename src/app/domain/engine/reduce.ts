@@ -6,7 +6,8 @@ import type { DieDef, DieId } from '../model/die';
 import { createRng } from './rng';
 import { discardUsed, draw } from './deck';
 import { applyDamage, applyHeal, applyShield } from './combat';
-import { needsTarget, targetableFor } from './targeting';
+import { needsTarget, resolveEnemyTarget, targetableFor } from './targeting';
+import { GreedyPolicy } from '../ai/greedy-policy';
 
 export interface ReduceRules {
   readonly dicePerTurn: number;
@@ -39,9 +40,9 @@ export function reduce(state: GameState, action: GameAction, rules: ReduceRules)
     case 'turn/endPlayer':
       return reduceEndPlayer(state);
     case 'enemy/act':
-      throw new Error('enemy/act is not implemented yet');
+      return reduceEnemyAct(state, action.enemyId, rules);
     case 'turn/endRound':
-      throw new Error('turn/endRound is not implemented yet');
+      return reduceEndRound(state);
   }
 }
 
@@ -301,4 +302,66 @@ function reduceEndPlayer(state: GameState): Reduction {
   }
 
   return noEffects(withBattle(state, { ...battle, phase: 'enemy.acting' }));
+}
+
+function reduceEnemyAct(state: GameState, enemyId: CombatantId, rules: ReduceRules): Reduction {
+  const battle = requireBattle(state);
+  if (battle.phase !== 'enemy.acting') {
+    throw new Error(`Cannot act outside enemy.acting (phase: ${battle.phase})`);
+  }
+  const enemy = findCombatant(battle, enemyId);
+  if (enemy.kind !== 'enemy') {
+    throw new Error(`${enemyId} is not an enemy`);
+  }
+  if (enemy.hp <= 0) {
+    throw new Error(`Enemy ${enemyId} is not alive`);
+  }
+
+  const rng = createRng(state.seed, state.rngCursor);
+  const drawResult = draw(enemy.deck, enemy.dicePerTurn, rng);
+  const drawnEnemy: Combatant = { ...enemy, deck: drawResult.deck };
+  const battleWithDrawn = withCombatant(battle, enemyId, drawnEnemy);
+
+  const chosenIds = GreedyPolicy.chooseDice(battleWithDrawn, enemyId, enemy.dicePerTurn);
+  if (chosenIds.length === 0) {
+    throw new Error(`Enemy ${enemyId} has no dice to act with`);
+  }
+
+  const actingEnemy: Combatant = { ...drawnEnemy, deck: discardUsed(drawnEnemy.deck, chosenIds) };
+  const battleWithDiscard = withCombatant(battleWithDrawn, enemyId, actingEnemy);
+
+  const resolveQueue: SelectedDie[] = chosenIds.map((dieId) => {
+    const def = actingEnemy.deck.catalog[dieId];
+    return { dieId, targetId: resolveEnemyTarget(def, enemyId, battle.player.id) };
+  });
+
+  const next: BattleState = {
+    ...battleWithDiscard,
+    activeCombatantId: enemyId,
+    resolveQueue,
+    phase: 'player.rolling',
+    staged: buildStagedRoll(resolveQueue[0], enemyId, battleWithDiscard),
+  };
+  const effects: GameEffect[] = drawResult.reshuffled ? [{ type: 'deck/reshuffled' }] : [];
+
+  return {
+    state: { ...withBattle(state, next), rngCursor: rng.cursor },
+    effects,
+  };
+}
+
+function reduceEndRound(state: GameState): Reduction {
+  const battle = requireBattle(state);
+  if (battle.phase !== 'enemy.acting') {
+    throw new Error(`Cannot end round outside enemy.acting (phase: ${battle.phase})`);
+  }
+
+  return noEffects(
+    withBattle(state, {
+      ...battle,
+      round: battle.round + 1,
+      phase: 'player.selecting',
+      activeCombatantId: battle.player.id,
+    }),
+  );
 }
