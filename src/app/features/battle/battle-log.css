@@ -1,0 +1,47 @@
+.battle-log {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.battle-log-entry {
+  padding-left: 0.5rem;
+  border-left: 3px solid var(--ink);
+  font-size: 0.85rem;
+}
+
+.battle-log-entry--attack {
+  border-color: var(--die-attack);
+}
+
+.battle-log-entry--heal {
+  border-color: var(--die-heal);
+}
+
+.battle-log-entry--shield {
+  border-color: var(--die-shield);
+}
+
+.battle-log-entry--system {
+  border-color: color-mix(in srgb, var(--ink) 40%, transparent);
+  opacity: 0.7;
+}
+
+.battle-log-entry--death {
+  border-color: var(--enemy);
+  font-weight: 600;
+}
+
+.battle-log-entry--turn {
+  border-color: var(--player);
+  font-weight: 600;
+}
+
+.battle-log-entry--reward {
+  border-color: var(--boss);
+}
