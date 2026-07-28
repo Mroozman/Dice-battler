@@ -64,4 +64,23 @@ describe('GameStore', () => {
 
     expect(store.battleOutcome()).toBe('ongoing');
   });
+
+  it('starts with an empty log for a freshly bootstrapped fight', () => {
+    const store = TestBed.inject(GameStore);
+
+    expect(store.log()).toEqual([]);
+  });
+
+  it('grows the log once a roll is revealed and applied', () => {
+    const store = TestBed.inject(GameStore);
+
+    selectFullHand(store);
+    store.dispatch({ type: 'player/confirm' });
+    store.dispatch({ type: 'roll/reveal', value: 4 });
+    store.dispatch({ type: 'roll/apply' });
+
+    expect(store.log().length).toBe(1);
+    expect(['attack', 'heal', 'shield']).toContain(store.log()[0].tone);
+    expect(store.log()[0].text.length).toBeGreaterThan(0);
+  });
 });

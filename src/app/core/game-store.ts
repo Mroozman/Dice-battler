@@ -7,6 +7,7 @@ import { deckView, handView, type DeckViewEntry } from '../domain/engine/deck';
 import { targetableFor } from '../domain/engine/targeting';
 import { battleOutcome, type BattleOutcome } from '../domain/engine/outcome';
 import type { DieDef } from '../domain/model/die';
+import type { LogEntry } from '../domain/model/log';
 import { RULES } from './tokens';
 import { createDevGameState } from './dev-battle-fixture';
 
@@ -26,6 +27,7 @@ export class GameStore {
     return deck ? handView(deck) : [];
   });
   readonly staged = computed(() => this._state().battle?.staged ?? null);
+  readonly log = computed<readonly LogEntry[]>(() => this._state().log);
 
   readonly deckView = computed<readonly DeckViewEntry[]>(() => {
     const deck = this._state().battle?.player.deck;
