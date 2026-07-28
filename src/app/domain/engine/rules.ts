@@ -10,6 +10,7 @@ export interface TimingRules {
   readonly rollMs: number;
   readonly impactMs: number;
   readonly drawMs: number;
+  readonly enemyActMs: number;
 }
 
 export interface GameRules {
@@ -32,5 +33,5 @@ export const RULES: GameRules = {
     { sides: 4, kind: 'shield', count: 1 },
   ],
   effectFromRoll: (roll) => roll,
-  timing: { rollMs: 600, impactMs: 350, drawMs: 250 },
+  timing: { rollMs: 600, impactMs: 350, drawMs: 250, enemyActMs: 700 },
 };
