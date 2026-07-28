@@ -38,6 +38,10 @@ export function reduce(state: GameState, action: GameAction, rules: ReduceRules)
       return reduceHandRefill(state, rules);
     case 'turn/endPlayer':
       return reduceEndPlayer(state);
+    case 'enemy/act':
+      throw new Error('enemy/act is not implemented yet');
+    case 'turn/endRound':
+      throw new Error('turn/endRound is not implemented yet');
   }
 }
 
@@ -66,7 +70,13 @@ function findDieDef(battle: BattleState, dieId: DieId): DieDef {
 
 function buildStagedRoll(sel: SelectedDie, battle: BattleState): StagedRoll {
   const def = findDieDef(battle, sel.dieId);
-  return { dieId: sel.dieId, sides: def.sides, kind: def.kind, ownerId: battle.player.id, value: null };
+  return {
+    dieId: sel.dieId,
+    sides: def.sides,
+    kind: def.kind,
+    ownerId: battle.player.id,
+    value: null,
+  };
 }
 
 function reduceToggleDie(state: GameState, dieId: DieId, rules: ReduceRules): Reduction {
@@ -116,7 +126,11 @@ function reduceSetTarget(state: GameState, dieId: DieId, targetId: CombatantId):
   };
 
   if (inQueue && battle.phase === 'player.retargeting') {
-    next = { ...next, phase: 'player.rolling', staged: buildStagedRoll(next.resolveQueue[0], next) };
+    next = {
+      ...next,
+      phase: 'player.rolling',
+      staged: buildStagedRoll(next.resolveQueue[0], next),
+    };
   }
 
   return noEffects(withBattle(state, next));
@@ -127,13 +141,19 @@ function reduceConfirm(state: GameState, rules: ReduceRules): Reduction {
   if (battle.phase !== 'player.selecting') {
     throw new Error(`Cannot confirm outside player.selecting (phase: ${battle.phase})`);
   }
-  if (battle.selection.length !== rules.dicePerTurn || battle.selection.some((sel) => sel.targetId === null)) {
+  if (
+    battle.selection.length !== rules.dicePerTurn ||
+    battle.selection.some((sel) => sel.targetId === null)
+  ) {
     throw new Error('Selection is not ready to confirm');
   }
 
   const player: Combatant = {
     ...battle.player,
-    deck: discardUsed(battle.player.deck, battle.selection.map((sel) => sel.dieId)),
+    deck: discardUsed(
+      battle.player.deck,
+      battle.selection.map((sel) => sel.dieId),
+    ),
   };
   const resolveQueue = battle.selection;
   const battleWithPlayer: BattleState = { ...battle, player, selection: [], resolveQueue };
@@ -153,7 +173,11 @@ function reduceRollReveal(state: GameState, value: number): Reduction {
   }
 
   return noEffects(
-    withBattle(state, { ...battle, phase: 'player.resolving', staged: { ...battle.staged, value } }),
+    withBattle(state, {
+      ...battle,
+      phase: 'player.resolving',
+      staged: { ...battle.staged, value },
+    }),
   );
 }
 

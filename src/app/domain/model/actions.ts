@@ -8,4 +8,6 @@ export type GameAction =
   | { type: 'roll/reveal'; value: number }
   | { type: 'roll/apply' }
   | { type: 'hand/refill' }
-  | { type: 'turn/endPlayer' };
+  | { type: 'turn/endPlayer' }
+  | { type: 'enemy/act'; enemyId: CombatantId }
+  | { type: 'turn/endRound' };
