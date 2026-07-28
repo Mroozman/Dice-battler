@@ -800,3 +800,126 @@ describe('battle ends: nothing further executes (M3 point 6)', () => {
     expect(() => reduce(state, { type: 'turn/endRound' }, RULES)).toThrow();
   });
 });
+
+describe('reduce populates the battle log (M4 point 2)', () => {
+  it('logs an attack roll with the correct tone and text', () => {
+    const atk = makeDie('atk', 'attack', 6);
+    const enemy = makeEnemy('e0', 5);
+    const battle = makeBattle(makePlayer(makeDeck([atk], 1)), [enemy], {
+      phase: 'player.resolving',
+      resolveQueue: [{ dieId: atk.id, targetId: enemy.id }],
+      staged: { dieId: atk.id, sides: 6, kind: 'attack', ownerId: 'player' as CombatantId, value: 4 },
+    });
+    const state = makeState(battle);
+
+    const { state: next } = reduce(state, { type: 'roll/apply' }, RULES);
+
+    expect(next.log.length).toBe(1);
+    expect(next.log[0].tone).toBe('attack');
+    expect(next.log[0].text).toBe('Player rzuca D6 → 4 obrażeń w e0');
+    expect(next.log[0].amount).toBe(4);
+  });
+
+  it('logs the actually healed amount, capped at maxHp, not the raw roll', () => {
+    const heal = makeDie('heal', 'heal', 4);
+    const player = makePlayer(makeDeck([heal], 1), { hp: 18, maxHp: 20 });
+    const battle = makeBattle(player, [makeEnemy('e0', 5)], {
+      phase: 'player.resolving',
+      resolveQueue: [{ dieId: heal.id, targetId: player.id }],
+      staged: { dieId: heal.id, sides: 4, kind: 'heal', ownerId: player.id, value: 4 },
+    });
+    const state = makeState(battle);
+
+    const { state: next } = reduce(state, { type: 'roll/apply' }, RULES);
+
+    expect(next.log[0].tone).toBe('heal');
+    expect(next.log[0].amount).toBe(2);
+    expect(next.log[0].text).toContain('leczy się o 2');
+  });
+
+  it('logs a death entry right after the attack entry when the hit is lethal', () => {
+    const atk = makeDie('atk', 'attack', 6);
+    const enemy = makeEnemy('e0', 3);
+    const battle = makeBattle(makePlayer(makeDeck([atk], 1)), [enemy], {
+      phase: 'player.resolving',
+      resolveQueue: [{ dieId: atk.id, targetId: enemy.id }],
+      staged: { dieId: atk.id, sides: 6, kind: 'attack', ownerId: 'player' as CombatantId, value: 5 },
+    });
+    const state = makeState(battle);
+
+    const { state: next } = reduce(state, { type: 'roll/apply' }, RULES);
+
+    expect(next.log.map((e) => e.tone)).toEqual(['attack', 'death']);
+    expect(next.log[1].text).toBe('e0 zostaje pokonany');
+    expect(next.log[0].id).not.toBe(next.log[1].id);
+  });
+
+  it('logs a reshuffle entry when hand/refill must reshuffle the discard pile', () => {
+    const dice = [makeDie('a', 'attack'), makeDie('b', 'attack')];
+    const deck: Deck = {
+      catalog: Object.fromEntries(dice.map((d) => [d.id, d])),
+      hand: [],
+      pool: [],
+      discard: dice.map((d) => d.id),
+    };
+    const battle = makeBattle(makePlayer(deck), [makeEnemy('e0', 5)], { phase: 'player.drawing' });
+    const state = makeState(battle);
+
+    const { state: next } = reduce(state, { type: 'hand/refill' }, RULES);
+
+    expect(next.log.length).toBe(1);
+    expect(next.log[0].tone).toBe('system');
+    expect(next.log[0].text).toBe('Odrzucone kości wracają do puli');
+  });
+
+  it('logs a reshuffle entry when an enemy must reshuffle its own discard pile', () => {
+    const dice = [makeDie('a', 'attack'), makeDie('b', 'attack')];
+    const deck: Deck = {
+      catalog: Object.fromEntries(dice.map((d) => [d.id, d])),
+      hand: [],
+      pool: [],
+      discard: dice.map((d) => d.id),
+    };
+    const enemy = makeEnemy('e0', 8, { deck, dicePerTurn: 1 });
+    const battle = makeBattle(makePlayer(makeDeck([], 0)), [enemy], { phase: 'enemy.acting' });
+    const state = makeState(battle);
+
+    const { state: next } = reduce(state, { type: 'enemy/act', enemyId: enemy.id }, RULES);
+
+    expect(next.log.length).toBe(1);
+    expect(next.log[0].tone).toBe('system');
+  });
+
+  it('logs the new round number when turn/endRound fires', () => {
+    const enemy = makeEnemy('e0', 8, { deck: makeDeck([], 0) });
+    const battle = makeBattle(makePlayer(makeDeck([], 0)), [enemy], { phase: 'enemy.acting', round: 1 });
+    const state = makeState(battle);
+
+    const { state: next } = reduce(state, { type: 'turn/endRound' }, RULES);
+
+    expect(next.log.length).toBe(1);
+    expect(next.log[0].tone).toBe('turn');
+    expect(next.log[0].text).toBe('Runda 2 rozpoczęta');
+    expect(next.log[0].round).toBe(2);
+  });
+
+  it('keeps ids sequential and preserves prior entries across multiple actions', () => {
+    const [atk, spare1, spare2] = ['atk', 'spare1', 'spare2'].map((id) => makeDie(id, 'attack', 6));
+    const enemy = makeEnemy('e0', 20);
+    const battle = makeBattle(makePlayer(makeDeck([atk, spare1, spare2], 1)), [enemy], {
+      phase: 'player.resolving',
+      resolveQueue: [{ dieId: atk.id, targetId: enemy.id }],
+      staged: { dieId: atk.id, sides: 6, kind: 'attack', ownerId: 'player' as CombatantId, value: 3 },
+    });
+    let state = makeState(battle);
+
+    state = reduce(state, { type: 'roll/apply' }, RULES).state;
+    expect(state.log.length).toBe(1);
+    expect(state.battle!.phase).toBe('player.drawing');
+
+    state = reduce(state, { type: 'hand/refill' }, RULES).state;
+
+    const ids = state.log.map((e) => e.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});

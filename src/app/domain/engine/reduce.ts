@@ -3,12 +3,15 @@ import type { GameAction } from '../model/actions';
 import type { BattleState, SelectedDie, StagedRoll } from '../model/battle';
 import type { Combatant, CombatantId } from '../model/combatant';
 import type { DieDef, DieId } from '../model/die';
+import type { LogEntry } from '../model/log';
 import { createRng } from './rng';
 import { discardUsed, draw } from './deck';
 import { applyDamage, applyHeal, applyShield } from './combat';
 import { needsTarget, resolveEnemyTarget, targetableFor } from './targeting';
 import { GreedyPolicy } from '../ai/greedy-policy';
 import { battleOutcome } from './outcome';
+import { logAttack, logDeath, logHeal, logReshuffle, logRoundStart, logShield } from './log';
+import type { LogContext } from './log';
 
 export interface ReduceRules {
   readonly dicePerTurn: number;
@@ -64,6 +67,13 @@ function requireBattle(state: GameState): BattleState {
 
 function withBattle(state: GameState, battle: BattleState): GameState {
   return { ...state, battle };
+}
+
+function appendLog(state: GameState, ...entries: readonly LogEntry[]): GameState {
+  if (entries.length === 0) {
+    return state;
+  }
+  return { ...state, log: [...state.log, ...entries] };
 }
 
 function findCombatant(battle: BattleState, id: CombatantId): Combatant {
@@ -220,6 +230,12 @@ function reduceRollApply(state: GameState, rules: ReduceRules): Reduction {
   const amount = rules.effectFromRoll(staged.value);
   const effects: GameEffect[] = [];
   const ownerId = staged.ownerId;
+  const pendingEntries: LogEntry[] = [];
+  const ctx = (): LogContext => ({
+    log: [...state.log, ...pendingEntries],
+    stageIndex: state.run.stageIndex,
+    round: battle.round,
+  });
 
   let next: BattleState = battle;
 
@@ -227,17 +243,27 @@ function reduceRollApply(state: GameState, rules: ReduceRules): Reduction {
     if (sel.targetId === null) {
       throw new Error('Attack die has no target to apply');
     }
+    const actor = findCombatant(next, ownerId);
     const target = findCombatant(next, sel.targetId);
     const wasAlive = target.hp > 0;
     const updatedTarget = applyDamage(target, amount);
     next = withCombatant(next, target.id, updatedTarget);
+    pendingEntries.push(logAttack(ctx(), actor, target, staged.sides, amount));
     if (wasAlive && updatedTarget.hp === 0) {
       effects.push({ type: 'combatant/died', combatantId: updatedTarget.id });
+      pendingEntries.push(logDeath(ctx(), updatedTarget));
     }
   } else {
     const actor = findCombatant(next, ownerId);
-    const updatedActor = staged.kind === 'heal' ? applyHeal(actor, amount).combatant : applyShield(actor, amount);
-    next = withCombatant(next, ownerId, updatedActor);
+    if (staged.kind === 'heal') {
+      const { combatant: updatedActor, healedAmount } = applyHeal(actor, amount);
+      next = withCombatant(next, ownerId, updatedActor);
+      pendingEntries.push(logHeal(ctx(), actor, staged.sides, healedAmount));
+    } else {
+      const updatedActor = applyShield(actor, amount);
+      next = withCombatant(next, ownerId, updatedActor);
+      pendingEntries.push(logShield(ctx(), actor, staged.sides, amount));
+    }
   }
 
   const ownerIsPlayer = ownerId === next.player.id;
@@ -249,7 +275,7 @@ function reduceRollApply(state: GameState, rules: ReduceRules): Reduction {
       staged: null,
       phase: ownerIsPlayer ? 'player.drawing' : 'enemy.acting',
     };
-    return { state: withBattle(state, next), effects };
+    return { state: appendLog(withBattle(state, next), ...pendingEntries), effects };
   }
 
   let remaining = battle.resolveQueue.slice(1);
@@ -272,7 +298,7 @@ function reduceRollApply(state: GameState, rules: ReduceRules): Reduction {
           phase: 'player.retargeting',
           staged: buildStagedRoll(remaining[0], ownerId, next),
         };
-        return { state: withBattle(state, next), effects };
+        return { state: appendLog(withBattle(state, next), ...pendingEntries), effects };
       }
     }
 
@@ -282,7 +308,7 @@ function reduceRollApply(state: GameState, rules: ReduceRules): Reduction {
       phase: 'player.rolling',
       staged: buildStagedRoll(remaining[0], ownerId, next),
     };
-    return { state: withBattle(state, next), effects };
+    return { state: appendLog(withBattle(state, next), ...pendingEntries), effects };
   }
 
   next = {
@@ -291,7 +317,7 @@ function reduceRollApply(state: GameState, rules: ReduceRules): Reduction {
     phase: ownerIsPlayer ? 'player.drawing' : 'enemy.acting',
     staged: null,
   };
-  return { state: withBattle(state, next), effects };
+  return { state: appendLog(withBattle(state, next), ...pendingEntries), effects };
 }
 
 function reduceHandRefill(state: GameState, rules: ReduceRules): Reduction {
@@ -304,9 +330,15 @@ function reduceHandRefill(state: GameState, rules: ReduceRules): Reduction {
   const result = draw(battle.player.deck, rules.dicePerTurn, rng);
   const player: Combatant = { ...battle.player, deck: result.deck };
   const effects: GameEffect[] = result.reshuffled ? [{ type: 'deck/reshuffled' }] : [];
+  const entries: LogEntry[] = result.reshuffled
+    ? [logReshuffle({ log: state.log, stageIndex: state.run.stageIndex, round: battle.round }, player)]
+    : [];
 
   return {
-    state: { ...withBattle(state, { ...battle, player }), rngCursor: rng.cursor },
+    state: {
+      ...appendLog(withBattle(state, { ...battle, player }), ...entries),
+      rngCursor: rng.cursor,
+    },
     effects,
   };
 }
@@ -359,9 +391,12 @@ function reduceEnemyAct(state: GameState, enemyId: CombatantId, rules: ReduceRul
     staged: buildStagedRoll(resolveQueue[0], enemyId, battleWithDiscard),
   };
   const effects: GameEffect[] = drawResult.reshuffled ? [{ type: 'deck/reshuffled' }] : [];
+  const entries: LogEntry[] = drawResult.reshuffled
+    ? [logReshuffle({ log: state.log, stageIndex: state.run.stageIndex, round: battle.round }, actingEnemy)]
+    : [];
 
   return {
-    state: { ...withBattle(state, next), rngCursor: rng.cursor },
+    state: { ...appendLog(withBattle(state, next), ...entries), rngCursor: rng.cursor },
     effects,
   };
 }
@@ -372,12 +407,16 @@ function reduceEndRound(state: GameState): Reduction {
     throw new Error(`Cannot end round outside enemy.acting (phase: ${battle.phase})`);
   }
 
-  return noEffects(
-    withBattle(state, {
-      ...battle,
-      round: battle.round + 1,
-      phase: 'player.selecting',
-      activeCombatantId: battle.player.id,
-    }),
+  const nextBattle: BattleState = {
+    ...battle,
+    round: battle.round + 1,
+    phase: 'player.selecting',
+    activeCombatantId: battle.player.id,
+  };
+  const entry = logRoundStart(
+    { log: state.log, stageIndex: state.run.stageIndex, round: nextBattle.round },
+    battle.player,
   );
+
+  return noEffects(appendLog(withBattle(state, nextBattle), entry));
 }

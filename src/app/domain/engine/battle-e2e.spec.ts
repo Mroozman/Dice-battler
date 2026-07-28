@@ -128,6 +128,10 @@ describe('a full battle, scripted end to end (M3 point 9)', () => {
     expect(state.battle!.resolveQueue).toEqual([]);
     expect(state.battle!.staged).toBeNull();
 
+    // M4: the battle log accumulated a coherent narrative of the whole fight.
+    expect(state.log.map((entry) => entry.tone)).toEqual(['attack', 'attack', 'death']);
+    expect(new Set(state.log.map((entry) => entry.id)).size).toBe(state.log.length);
+
     expect(() => dispatch({ type: 'hand/refill' })).toThrow();
   });
 
@@ -178,6 +182,10 @@ describe('a full battle, scripted end to end (M3 point 9)', () => {
     expect(battleOutcome(state.battle!)).toBe('defeat');
     expect(state.battle!.resolveQueue).toEqual([]);
     expect(state.battle!.staged).toBeNull();
+
+    // M4: two player hits, a reshuffle during hand/refill, the enemy's hit, then death.
+    expect(state.log.map((entry) => entry.tone)).toEqual(['attack', 'attack', 'system', 'attack', 'death']);
+    expect(new Set(state.log.map((entry) => entry.id)).size).toBe(state.log.length);
 
     expect(() => dispatch({ type: 'turn/endRound' })).toThrow();
   });
