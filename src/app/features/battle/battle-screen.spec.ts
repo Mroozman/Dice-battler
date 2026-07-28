@@ -77,4 +77,51 @@ describe('BattleScreen', () => {
     expect(store.battle()!.phase).toBe('enemy.acting');
     expect(store.hand().length).toBe(3);
   });
+
+  it('shows a victory/defeat placeholder instead of the board once the battle ends', () => {
+    const fixture = TestBed.createComponent(BattleScreen);
+    fixture.detectChanges();
+    const store = TestBed.inject(GameStore);
+    TestBed.inject(TurnEngine);
+    TestBed.tick();
+
+    for (let round = 0; round < 30 && store.battleOutcome() === 'ongoing'; round++) {
+      const dicePerTurn = store.state().battle!.player.dicePerTurn;
+      const chosen = store.hand().slice(0, dicePerTurn);
+      for (const def of chosen) {
+        store.dispatch({ type: 'player/toggleDie', dieId: def.id });
+        if (def.kind === 'attack') {
+          store.dispatch({ type: 'player/setTarget', dieId: def.id, targetId: store.targetableIds()[0] });
+        }
+      }
+      store.dispatch({ type: 'player/confirm' });
+      TestBed.tick();
+
+      for (
+        let i = 0;
+        i < 100 && store.battle()!.phase !== 'player.selecting' && store.battleOutcome() === 'ongoing';
+        i++
+      ) {
+        const battle = store.battle()!;
+        if (battle.phase === 'player.retargeting') {
+          const head = battle.resolveQueue[0];
+          store.dispatch({ type: 'player/setTarget', dieId: head.dieId, targetId: store.targetableIds()[0] });
+          TestBed.tick();
+        } else {
+          vi.advanceTimersByTime(1000);
+          TestBed.tick();
+        }
+      }
+    }
+
+    expect(store.battleOutcome()).not.toBe('ongoing');
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.battle-outcome')).toBeTruthy();
+    expect(root.querySelector('.battle-screen')).toBeNull();
+    expect(root.querySelector('h1')?.textContent).toBe(
+      store.battleOutcome() === 'victory' ? 'Zwycięstwo!' : 'Porażka',
+    );
+  });
 });

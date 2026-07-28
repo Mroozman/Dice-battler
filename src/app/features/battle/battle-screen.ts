@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { GameStore } from '../../core/game-store';
 import { TurnEngine } from '../../core/turn-engine';
 import type { CombatantId } from '../../domain/model/combatant';
@@ -16,6 +16,17 @@ import { HandBar } from './hand-bar';
 export class BattleScreen {
   private readonly turnEngine = inject(TurnEngine);
   protected readonly store = inject(GameStore);
+
+  protected readonly outcomeTitle = computed(() => {
+    switch (this.store.battleOutcome()) {
+      case 'victory':
+        return 'Zwycięstwo!';
+      case 'defeat':
+        return 'Porażka';
+      default:
+        return '';
+    }
+  });
 
   private awaitingTargetDieId(): DieId | null {
     const battle = this.store.battle();

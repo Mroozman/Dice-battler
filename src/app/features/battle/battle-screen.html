@@ -1,4 +1,12 @@
-@if (store.battle(); as battle) {
+@if (store.battleOutcome() !== 'ongoing') {
+  <div
+    class="battle-outcome"
+    [class.battle-outcome--victory]="store.battleOutcome() === 'victory'"
+    [class.battle-outcome--defeat]="store.battleOutcome() === 'defeat'"
+  >
+    <h1>{{ outcomeTitle() }}</h1>
+  </div>
+} @else if (store.battle(); as battle) {
   <div class="battle-screen">
     <aside class="zone deck" style="grid-area: deck">
       <h2 class="zone-title">Talia</h2>

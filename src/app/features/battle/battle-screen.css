@@ -38,3 +38,24 @@
   font-size: 0.85rem;
   opacity: 0.6;
 }
+
+.battle-outcome {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100dvh;
+  background: var(--surface);
+}
+
+.battle-outcome h1 {
+  font-size: 3rem;
+  letter-spacing: 0.05em;
+}
+
+.battle-outcome--victory h1 {
+  color: var(--player);
+}
+
+.battle-outcome--defeat h1 {
+  color: var(--enemy);
+}
