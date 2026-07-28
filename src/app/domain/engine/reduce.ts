@@ -60,21 +60,40 @@ function withBattle(state: GameState, battle: BattleState): GameState {
   return { ...state, battle };
 }
 
-function findDieDef(battle: BattleState, dieId: DieId): DieDef {
-  const def = battle.player.deck.catalog[dieId];
+function findCombatant(battle: BattleState, id: CombatantId): Combatant {
+  if (battle.player.id === id) {
+    return battle.player;
+  }
+  const enemy = battle.enemies.find((e) => e.id === id);
+  if (!enemy) {
+    throw new Error(`Unknown combatant: ${id}`);
+  }
+  return enemy;
+}
+
+function withCombatant(battle: BattleState, id: CombatantId, updated: Combatant): BattleState {
+  if (battle.player.id === id) {
+    return { ...battle, player: updated };
+  }
+  return { ...battle, enemies: battle.enemies.map((e) => (e.id === id ? updated : e)) };
+}
+
+function findDieDef(battle: BattleState, ownerId: CombatantId, dieId: DieId): DieDef {
+  const owner = findCombatant(battle, ownerId);
+  const def = owner.deck.catalog[dieId];
   if (!def) {
     throw new Error(`Unknown die: ${dieId}`);
   }
   return def;
 }
 
-function buildStagedRoll(sel: SelectedDie, battle: BattleState): StagedRoll {
-  const def = findDieDef(battle, sel.dieId);
+function buildStagedRoll(sel: SelectedDie, ownerId: CombatantId, battle: BattleState): StagedRoll {
+  const def = findDieDef(battle, ownerId, sel.dieId);
   return {
     dieId: sel.dieId,
     sides: def.sides,
     kind: def.kind,
-    ownerId: battle.player.id,
+    ownerId,
     value: null,
   };
 }
@@ -96,7 +115,7 @@ function reduceToggleDie(state: GameState, dieId: DieId, rules: ReduceRules): Re
     if (battle.selection.length >= rules.dicePerTurn) {
       return noEffects(state);
     }
-    const def = findDieDef(battle, dieId);
+    const def = findDieDef(battle, battle.player.id, dieId);
     const targetId = needsTarget(def.kind) ? null : battle.player.id;
     selection = [...battle.selection, { dieId, targetId }];
   }
@@ -129,7 +148,7 @@ function reduceSetTarget(state: GameState, dieId: DieId, targetId: CombatantId):
     next = {
       ...next,
       phase: 'player.rolling',
-      staged: buildStagedRoll(next.resolveQueue[0], next),
+      staged: buildStagedRoll(next.resolveQueue[0], battle.player.id, next),
     };
   }
 
@@ -160,7 +179,7 @@ function reduceConfirm(state: GameState, rules: ReduceRules): Reduction {
   const nextBattle: BattleState = {
     ...battleWithPlayer,
     phase: 'player.rolling',
-    staged: buildStagedRoll(resolveQueue[0], battleWithPlayer),
+    staged: buildStagedRoll(resolveQueue[0], battle.player.id, battleWithPlayer),
   };
 
   return noEffects(withBattle(state, nextBattle));
@@ -194,60 +213,67 @@ function reduceRollApply(state: GameState, rules: ReduceRules): Reduction {
   const sel = battle.resolveQueue[0];
   const amount = rules.effectFromRoll(staged.value);
   const effects: GameEffect[] = [];
+  const ownerId = staged.ownerId;
 
-  let player = battle.player;
-  let enemies = battle.enemies;
+  let next: BattleState = battle;
 
   if (staged.kind === 'attack') {
-    const target = enemies.find((enemy) => enemy.id === sel.targetId);
-    if (!target) {
-      throw new Error(`Attack target ${sel.targetId} not found`);
+    if (sel.targetId === null) {
+      throw new Error('Attack die has no target to apply');
     }
+    const target = findCombatant(next, sel.targetId);
     const wasAlive = target.hp > 0;
     const updatedTarget = applyDamage(target, amount);
-    enemies = enemies.map((enemy) => (enemy.id === updatedTarget.id ? updatedTarget : enemy));
+    next = withCombatant(next, target.id, updatedTarget);
     if (wasAlive && updatedTarget.hp === 0) {
       effects.push({ type: 'combatant/died', combatantId: updatedTarget.id });
     }
-  } else if (staged.kind === 'heal') {
-    player = applyHeal(player, amount).combatant;
   } else {
-    player = applyShield(player, amount);
+    const actor = findCombatant(next, ownerId);
+    const updatedActor = staged.kind === 'heal' ? applyHeal(actor, amount).combatant : applyShield(actor, amount);
+    next = withCombatant(next, ownerId, updatedActor);
   }
 
-  let next: BattleState = { ...battle, player, enemies };
+  const ownerIsPlayer = ownerId === next.player.id;
   let remaining = battle.resolveQueue.slice(1);
 
   while (remaining.length > 0) {
     const head = remaining[0];
-    const headDef = findDieDef(next, head.dieId);
-    const targetStillAlive = head.targetId !== null && targetableFor(next).includes(head.targetId);
+    const headDef = findDieDef(next, ownerId, head.dieId);
 
-    if (headDef.kind === 'attack' && !targetStillAlive) {
-      if (targetableFor(next).length === 0) {
-        remaining = remaining.slice(1);
-        continue;
+    if (ownerIsPlayer && headDef.kind === 'attack') {
+      const targetStillAlive = head.targetId !== null && targetableFor(next).includes(head.targetId);
+      if (!targetStillAlive) {
+        if (targetableFor(next).length === 0) {
+          remaining = remaining.slice(1);
+          continue;
+        }
+        remaining = [{ ...head, targetId: null }, ...remaining.slice(1)];
+        next = {
+          ...next,
+          resolveQueue: remaining,
+          phase: 'player.retargeting',
+          staged: buildStagedRoll(remaining[0], ownerId, next),
+        };
+        return { state: withBattle(state, next), effects };
       }
-      remaining = [{ ...head, targetId: null }, ...remaining.slice(1)];
-      next = {
-        ...next,
-        resolveQueue: remaining,
-        phase: 'player.retargeting',
-        staged: buildStagedRoll(remaining[0], next),
-      };
-      return { state: withBattle(state, next), effects };
     }
 
     next = {
       ...next,
       resolveQueue: remaining,
       phase: 'player.rolling',
-      staged: buildStagedRoll(remaining[0], next),
+      staged: buildStagedRoll(remaining[0], ownerId, next),
     };
     return { state: withBattle(state, next), effects };
   }
 
-  next = { ...next, resolveQueue: [], phase: 'player.drawing', staged: null };
+  next = {
+    ...next,
+    resolveQueue: [],
+    phase: ownerIsPlayer ? 'player.drawing' : 'enemy.acting',
+    staged: null,
+  };
   return { state: withBattle(state, next), effects };
 }
 

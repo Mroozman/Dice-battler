@@ -481,3 +481,128 @@ describe('turn/endPlayer', () => {
     expect(() => reduce(state, { type: 'turn/endPlayer' }, RULES)).toThrow();
   });
 });
+
+describe('roll/apply — generalized to any actor (M3 point 4)', () => {
+  it('applies an enemy attack die to the player, not another enemy', () => {
+    const atk = makeDie('atk', 'attack');
+    const enemy = makeEnemy('e0', 8, { deck: makeDeck([atk], 1) });
+    const player = makePlayer(makeDeck([], 0), { hp: 10, maxHp: 20 });
+    const battle = makeBattle(player, [enemy], {
+      phase: 'player.resolving',
+      activeCombatantId: enemy.id,
+      resolveQueue: [{ dieId: atk.id, targetId: player.id }],
+      staged: { dieId: atk.id, sides: 6, kind: 'attack', ownerId: enemy.id, value: 4 },
+    });
+    const state = makeState(battle);
+
+    const { state: next } = reduce(state, { type: 'roll/apply' }, RULES);
+
+    expect(next.battle!.player.hp).toBe(6);
+    expect(next.battle!.enemies[0].hp).toBe(8);
+  });
+
+  it('applies an enemy heal die to that enemy itself, never the player', () => {
+    const heal = makeDie('heal', 'heal');
+    const enemy = makeEnemy('e0', 3, { maxHp: 10, deck: makeDeck([heal], 1) });
+    const player = makePlayer(makeDeck([], 0), { hp: 15 });
+    const battle = makeBattle(player, [enemy], {
+      phase: 'player.resolving',
+      activeCombatantId: enemy.id,
+      resolveQueue: [{ dieId: heal.id, targetId: enemy.id }],
+      staged: { dieId: heal.id, sides: 6, kind: 'heal', ownerId: enemy.id, value: 5 },
+    });
+    const state = makeState(battle);
+
+    const { state: next } = reduce(state, { type: 'roll/apply' }, RULES);
+
+    expect(next.battle!.enemies[0].hp).toBe(8);
+    expect(next.battle!.player.hp).toBe(15);
+  });
+
+  it('applies an enemy shield die to that enemy itself', () => {
+    const shield = makeDie('shield', 'shield');
+    const enemy = makeEnemy('e0', 8, { shield: 1, deck: makeDeck([shield], 1) });
+    const battle = makeBattle(makePlayer(makeDeck([], 0)), [enemy], {
+      phase: 'player.resolving',
+      activeCombatantId: enemy.id,
+      resolveQueue: [{ dieId: shield.id, targetId: enemy.id }],
+      staged: { dieId: shield.id, sides: 6, kind: 'shield', ownerId: enemy.id, value: 4 },
+    });
+    const state = makeState(battle);
+
+    const { state: next } = reduce(state, { type: 'roll/apply' }, RULES);
+
+    expect(next.battle!.enemies[0].shield).toBe(5);
+  });
+
+  it('emits combatant/died when an enemy attack drops the player to 0 hp', () => {
+    const atk = makeDie('atk', 'attack');
+    const enemy = makeEnemy('e0', 8, { deck: makeDeck([atk], 1) });
+    const player = makePlayer(makeDeck([], 0), { hp: 3 });
+    const battle = makeBattle(player, [enemy], {
+      phase: 'player.resolving',
+      activeCombatantId: enemy.id,
+      resolveQueue: [{ dieId: atk.id, targetId: player.id }],
+      staged: { dieId: atk.id, sides: 6, kind: 'attack', ownerId: enemy.id, value: 5 },
+    });
+    const state = makeState(battle);
+
+    const { state: next, effects } = reduce(state, { type: 'roll/apply' }, RULES);
+
+    expect(next.battle!.player.hp).toBe(0);
+    expect(effects).toEqual([{ type: 'combatant/died', combatantId: player.id }]);
+  });
+
+  it('advances through a boss turn (two enemy dice) without misfiring the player-only retargeting check', () => {
+    const [atk1, atk2] = [makeDie('atk1', 'attack'), makeDie('atk2', 'attack')];
+    const enemy = makeEnemy('e0', 8, { deck: makeDeck([atk1, atk2], 2), dicePerTurn: 2 });
+    const player = makePlayer(makeDeck([], 0), { hp: 20, maxHp: 20 });
+    const battle = makeBattle(player, [enemy], {
+      phase: 'player.resolving',
+      activeCombatantId: enemy.id,
+      resolveQueue: [
+        { dieId: atk1.id, targetId: player.id },
+        { dieId: atk2.id, targetId: player.id },
+      ],
+      staged: { dieId: atk1.id, sides: 6, kind: 'attack', ownerId: enemy.id, value: 3 },
+    });
+    const state = makeState(battle);
+
+    const { state: next } = reduce(state, { type: 'roll/apply' }, RULES);
+    const battleAfter = next.battle!;
+
+    // Phase name is reused from the player's flow (see model comment); activeCombatantId still
+    // tracks the enemy. targetableFor only lists enemies, so if the retargeting check ran
+    // unconditionally here it would wrongly conclude the player-target is invalid — it must not.
+    expect(battleAfter.phase).toBe('player.rolling');
+    expect(battleAfter.resolveQueue).toEqual([{ dieId: atk2.id, targetId: player.id }]);
+    expect(battleAfter.staged).toEqual({
+      dieId: atk2.id,
+      sides: 6,
+      kind: 'attack',
+      ownerId: enemy.id,
+      value: null,
+    });
+    expect(battleAfter.player.hp).toBe(17);
+  });
+
+  it('returns to enemy.acting (not player.drawing) once an enemy queue is exhausted', () => {
+    const atk = makeDie('atk', 'attack');
+    const enemy = makeEnemy('e0', 8, { deck: makeDeck([atk], 1) });
+    const player = makePlayer(makeDeck([], 0));
+    const battle = makeBattle(player, [enemy], {
+      phase: 'player.resolving',
+      activeCombatantId: enemy.id,
+      resolveQueue: [{ dieId: atk.id, targetId: player.id }],
+      staged: { dieId: atk.id, sides: 6, kind: 'attack', ownerId: enemy.id, value: 2 },
+    });
+    const state = makeState(battle);
+
+    const { state: next } = reduce(state, { type: 'roll/apply' }, RULES);
+    const battleAfter = next.battle!;
+
+    expect(battleAfter.resolveQueue).toEqual([]);
+    expect(battleAfter.phase).toBe('enemy.acting');
+    expect(battleAfter.staged).toBeNull();
+  });
+});
