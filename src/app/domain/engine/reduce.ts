@@ -8,6 +8,7 @@ import { discardUsed, draw } from './deck';
 import { applyDamage, applyHeal, applyShield } from './combat';
 import { needsTarget, resolveEnemyTarget, targetableFor } from './targeting';
 import { GreedyPolicy } from '../ai/greedy-policy';
+import { battleOutcome } from './outcome';
 
 export interface ReduceRules {
   readonly dicePerTurn: number;
@@ -53,6 +54,10 @@ function noEffects(state: GameState): Reduction {
 function requireBattle(state: GameState): BattleState {
   if (!state.battle) {
     throw new Error('No battle in progress');
+  }
+  const outcome = battleOutcome(state.battle);
+  if (outcome !== 'ongoing') {
+    throw new Error(`Battle has already ended (${outcome})`);
   }
   return state.battle;
 }
@@ -236,6 +241,17 @@ function reduceRollApply(state: GameState, rules: ReduceRules): Reduction {
   }
 
   const ownerIsPlayer = ownerId === next.player.id;
+
+  if (battleOutcome(next) !== 'ongoing') {
+    next = {
+      ...next,
+      resolveQueue: [],
+      staged: null,
+      phase: ownerIsPlayer ? 'player.drawing' : 'enemy.acting',
+    };
+    return { state: withBattle(state, next), effects };
+  }
+
   let remaining = battle.resolveQueue.slice(1);
 
   while (remaining.length > 0) {

@@ -58,4 +58,10 @@ describe('GameStore', () => {
     expect(discarded.length).toBe(2);
     expect(store.state().battle!.phase).toBe('player.rolling');
   });
+
+  it('reports the battle as ongoing for a freshly bootstrapped fight', () => {
+    const store = TestBed.inject(GameStore);
+
+    expect(store.battleOutcome()).toBe('ongoing');
+  });
 });

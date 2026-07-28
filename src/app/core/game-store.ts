@@ -5,6 +5,7 @@ import type { CombatantId } from '../domain/model/combatant';
 import { reduce } from '../domain/engine/reduce';
 import { deckView, handView, type DeckViewEntry } from '../domain/engine/deck';
 import { targetableFor } from '../domain/engine/targeting';
+import { battleOutcome, type BattleOutcome } from '../domain/engine/outcome';
 import type { DieDef } from '../domain/model/die';
 import { RULES } from './tokens';
 import { createDevGameState } from './dev-battle-fixture';
@@ -32,6 +33,11 @@ export class GameStore {
   });
 
   readonly targetableIds = computed<readonly CombatantId[]>(() => targetableFor(this._state().battle));
+
+  readonly battleOutcome = computed<BattleOutcome>(() => {
+    const battle = this._state().battle;
+    return battle ? battleOutcome(battle) : 'ongoing';
+  });
 
   readonly canConfirm = computed(() => {
     const battle = this._state().battle;

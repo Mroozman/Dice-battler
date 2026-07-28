@@ -735,3 +735,68 @@ describe('turn/endRound', () => {
     expect(() => reduce(state, { type: 'turn/endRound' }, RULES)).toThrow();
   });
 });
+
+describe('battle ends: nothing further executes (M3 point 6)', () => {
+  it('stops resolving further queued dice the instant the last enemy dies, even mid multi-die turn', () => {
+    const [atk1, atk2] = [makeDie('atk1', 'attack'), makeDie('atk2', 'attack')];
+    const deck = makeDeck([atk1, atk2], 2);
+    const enemy = makeEnemy('e0', 3, { hp: 3 });
+    const battle = makeBattle(makePlayer(deck), [enemy], {
+      phase: 'player.resolving',
+      resolveQueue: [
+        { dieId: atk1.id, targetId: enemy.id },
+        { dieId: atk2.id, targetId: enemy.id },
+      ],
+      staged: { dieId: atk1.id, sides: 6, kind: 'attack', ownerId: 'player' as CombatantId, value: 5 },
+    });
+    const state = makeState(battle);
+
+    const { state: next } = reduce(state, { type: 'roll/apply' }, RULES);
+    const battleAfter = next.battle!;
+
+    expect(battleAfter.resolveQueue).toEqual([]);
+    expect(battleAfter.staged).toBeNull();
+  });
+
+  it('stops resolving further queued dice the instant the player dies, even mid boss turn', () => {
+    const [atk1, atk2] = [makeDie('atk1', 'attack'), makeDie('atk2', 'attack')];
+    const boss = makeEnemy('boss', 20, { deck: makeDeck([atk1, atk2], 2), dicePerTurn: 2 });
+    const player = makePlayer(makeDeck([], 0), { hp: 3 });
+    const battle = makeBattle(player, [boss], {
+      phase: 'player.resolving',
+      activeCombatantId: boss.id,
+      resolveQueue: [
+        { dieId: atk1.id, targetId: player.id },
+        { dieId: atk2.id, targetId: player.id },
+      ],
+      staged: { dieId: atk1.id, sides: 6, kind: 'attack', ownerId: boss.id, value: 5 },
+    });
+    const state = makeState(battle);
+
+    const { state: next } = reduce(state, { type: 'roll/apply' }, RULES);
+    const battleAfter = next.battle!;
+
+    expect(battleAfter.player.hp).toBe(0);
+    expect(battleAfter.resolveQueue).toEqual([]);
+    expect(battleAfter.staged).toBeNull();
+  });
+
+  it('rejects any further action once the battle has ended', () => {
+    const atk = makeDie('atk', 'attack');
+    const deck = makeDeck([atk], 1);
+    const deadEnemy = makeEnemy('e0', 0);
+    const battle = makeBattle(makePlayer(deck), [deadEnemy]);
+    const state = makeState(battle);
+
+    expect(() => reduce(state, { type: 'player/toggleDie', dieId: atk.id }, RULES)).toThrow();
+  });
+
+  it('rejects further action once the player has died', () => {
+    const deck = makeDeck([makeDie('atk', 'attack')], 1);
+    const player = makePlayer(deck, { hp: 0 });
+    const battle = makeBattle(player, [makeEnemy('e0', 5)], { phase: 'enemy.acting' });
+    const state = makeState(battle);
+
+    expect(() => reduce(state, { type: 'turn/endRound' }, RULES)).toThrow();
+  });
+});
