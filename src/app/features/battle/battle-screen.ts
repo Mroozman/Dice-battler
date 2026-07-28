@@ -6,10 +6,11 @@ import type { DieId } from '../../domain/model/die';
 import { DeckPanel } from './deck-panel';
 import { Battlefield } from './battlefield';
 import { HandBar } from './hand-bar';
+import { BattleLog } from './battle-log';
 
 @Component({
   selector: 'app-battle-screen',
-  imports: [DeckPanel, Battlefield, HandBar],
+  imports: [DeckPanel, Battlefield, HandBar, BattleLog],
   templateUrl: './battle-screen.html',
   styleUrl: './battle-screen.css',
 })

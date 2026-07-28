@@ -26,7 +26,7 @@
 
     <aside class="zone log" style="grid-area: log">
       <h2 class="zone-title">Log walki</h2>
-      <p class="log-placeholder">Log walki pojawi się w kolejnym etapie.</p>
+      <app-battle-log [entries]="store.log()" />
     </aside>
 
     <footer class="zone hand" style="grid-area: hand">

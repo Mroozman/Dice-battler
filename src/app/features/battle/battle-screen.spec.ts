@@ -76,6 +76,11 @@ describe('BattleScreen', () => {
 
     expect(store.battle()!.phase).toBe('enemy.acting');
     expect(store.hand().length).toBe(3);
+
+    // M4: the log grew alongside the turn and is actually rendered, not just tracked in state.
+    fixture.detectChanges();
+    expect(store.log().length).toBeGreaterThan(0);
+    expect(fixture.nativeElement.querySelectorAll('.battle-log-entry').length).toBe(store.log().length);
   });
 
   it('shows a victory/defeat placeholder instead of the board once the battle ends', () => {
