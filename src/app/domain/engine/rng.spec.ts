@@ -1,4 +1,4 @@
-import { createRng, rollDie } from './rng';
+import { createRng, hashSeed, rollDie } from './rng';
 import type { DieSides } from '../model/die';
 
 function rollMany(seed: string, cursor: number, count: number, sides: DieSides): number[] {
@@ -46,5 +46,26 @@ describe('rollDie', () => {
       expect(value).toBeLessThanOrEqual(sides);
       expect(Number.isInteger(value)).toBe(true);
     }
+  });
+});
+
+describe('hashSeed', () => {
+  it('is deterministic for the same string', () => {
+    expect(hashSeed('dev-seed')).toBe(hashSeed('dev-seed'));
+  });
+
+  it('differs across distinct seeds', () => {
+    expect(hashSeed('seed-a')).not.toBe(hashSeed('seed-b'));
+  });
+
+  it('returns a non-negative 32-bit unsigned integer', () => {
+    const hash = hashSeed('some-arbitrary-seed');
+    expect(Number.isInteger(hash)).toBe(true);
+    expect(hash).toBeGreaterThanOrEqual(0);
+    expect(hash).toBeLessThanOrEqual(0xffffffff);
+  });
+
+  it('does not throw for an empty string', () => {
+    expect(() => hashSeed('')).not.toThrow();
   });
 });

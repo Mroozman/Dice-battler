@@ -9,7 +9,7 @@ export interface Rng {
   readonly cursor: number;
 }
 
-function hashSeed(seed: string): number {
+export function hashSeed(seed: string): number {
   let hash = FNV_OFFSET_BASIS;
   for (let i = 0; i < seed.length; i++) {
     hash ^= seed.charCodeAt(i);
