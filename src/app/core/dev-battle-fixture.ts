@@ -5,6 +5,7 @@ import type { GameState } from '../domain/model/state';
 import type { DeckDieTemplate, GameRules } from '../domain/engine/rules';
 import { createRng } from '../domain/engine/rng';
 import { buildBattleDeck } from '../domain/engine/deck';
+import { expandDeckTemplate } from '../domain/content/deck-builder';
 
 const DEV_SEED = 'dev-seed';
 
@@ -36,19 +37,8 @@ const DEV_ENEMIES: readonly DevEnemySpec[] = [
   },
 ];
 
-function expandTemplates(templates: readonly DeckDieTemplate[], prefix: string): DieDef[] {
-  return templates.flatMap((template, templateIndex) =>
-    Array.from({ length: template.count }, (_, i) => ({
-      id: `${prefix}-${templateIndex}-${i}` as DieId,
-      sides: template.sides,
-      kind: template.kind,
-      label: `D${template.sides}`,
-    })),
-  );
-}
-
 function makeEnemy(spec: DevEnemySpec): Combatant {
-  const dice = expandTemplates(spec.deck, spec.id);
+  const dice = expandDeckTemplate(spec.deck, spec.id);
   const catalog = Object.fromEntries(dice.map((d) => [d.id, d])) as Readonly<Record<DieId, DieDef>>;
   return {
     id: spec.id as CombatantId,
@@ -64,7 +54,7 @@ function makeEnemy(spec: DevEnemySpec): Combatant {
 }
 
 export function createDevGameState(rules: GameRules): GameState {
-  const dice = expandTemplates(rules.starterDeck, 'player');
+  const dice = expandDeckTemplate(rules.starterDeck, 'player');
   const catalog = Object.fromEntries(dice.map((d) => [d.id, d])) as Readonly<Record<DieId, DieDef>>;
   const rng = createRng(DEV_SEED);
   const deck = buildBattleDeck(catalog, rules.handSize, rules.dicePerTurn, rng);
