@@ -20,6 +20,9 @@ export interface GameRules {
   readonly starterDeck: readonly DeckDieTemplate[];
   readonly effectFromRoll: (roll: number) => number;
   readonly timing: TimingRules;
+  readonly healBetweenStages: number;
+  readonly revealEnemyDeckFromStage: number;
+  readonly rewardAfterBoss: boolean;
 }
 
 export const RULES: GameRules = {
@@ -34,4 +37,7 @@ export const RULES: GameRules = {
   ],
   effectFromRoll: (roll) => roll,
   timing: { rollMs: 600, impactMs: 350, drawMs: 250, enemyActMs: 700 },
+  healBetweenStages: 0.25,
+  revealEnemyDeckFromStage: 1,
+  rewardAfterBoss: false,
 };

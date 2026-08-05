@@ -47,6 +47,18 @@ export function reduce(state: GameState, action: GameAction, rules: ReduceRules)
       return reduceEnemyAct(state, action.enemyId, rules);
     case 'turn/endRound':
       return reduceEndRound(state);
+    case 'run/start':
+      throw new Error('run/start is not implemented yet');
+    case 'stage/enter':
+      throw new Error('stage/enter is not implemented yet');
+    case 'reward/offer':
+      throw new Error('reward/offer is not implemented yet');
+    case 'reward/swap':
+      throw new Error('reward/swap is not implemented yet');
+    case 'reward/skip':
+      throw new Error('reward/skip is not implemented yet');
+    case 'stage/advance':
+      throw new Error('stage/advance is not implemented yet');
   }
 }
 
