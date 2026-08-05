@@ -102,4 +102,19 @@ describe('Battlefield', () => {
     expect(cards.length).toBe(1);
     expect(cards[0].classList.contains('combatant-card--player')).toBe(true);
   });
+
+  it('only shows the enemy deck preview when deckPreviewEnabled is true', () => {
+    const fixture = TestBed.createComponent(Battlefield);
+    fixture.componentRef.setInput('enemies', [makeCombatant('e0', 5)]);
+    fixture.componentRef.setInput('player', makeCombatant('player', 20, 'player'));
+    fixture.componentRef.setInput('deckPreviewEnabled', false);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-deck-preview')).toBeNull();
+
+    fixture.componentRef.setInput('deckPreviewEnabled', true);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-deck-preview')).toBeTruthy();
+  });
 });

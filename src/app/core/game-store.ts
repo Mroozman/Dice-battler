@@ -6,7 +6,7 @@ import { reduce } from '../domain/engine/reduce';
 import { deckView, handView, type DeckViewEntry } from '../domain/engine/deck';
 import { targetableFor } from '../domain/engine/targeting';
 import { battleOutcome, type BattleOutcome } from '../domain/engine/outcome';
-import type { DieDef } from '../domain/model/die';
+import type { DieDef, DieId } from '../domain/model/die';
 import type { LogEntry } from '../domain/model/log';
 import { RULES } from './tokens';
 import { createDevGameState } from './dev-battle-fixture';
@@ -20,6 +20,7 @@ export class GameStore {
 
   readonly state = this._state.asReadonly();
   readonly screen = computed(() => this._state().screen);
+  readonly run = computed(() => this._state().run);
   readonly battle = computed(() => this._state().battle);
   readonly enemies = computed(() => this._state().battle?.enemies ?? []);
   readonly hand = computed<readonly DieDef[]>(() => {
@@ -34,7 +35,16 @@ export class GameStore {
     return deck ? deckView(deck) : [];
   });
 
+  readonly rewardCatalogView = computed<readonly DeckViewEntry[]>(() => {
+    const catalog = this._state().run.playerCatalog;
+    return deckView({ catalog, pool: Object.keys(catalog) as DieId[], hand: [], discard: [] });
+  });
+
   readonly targetableIds = computed<readonly CombatantId[]>(() => targetableFor(this._state().battle));
+
+  readonly enemyDeckVisible = computed(
+    () => this._state().run.stageIndex >= this.rules.revealEnemyDeckFromStage,
+  );
 
   readonly battleOutcome = computed<BattleOutcome>(() => {
     const battle = this._state().battle;

@@ -86,6 +86,7 @@ function makeInitialState(seed: string): GameState {
       playerMaxHp: player.maxHp,
       pendingReward: null,
       outcome: 'ongoing',
+      lastHealAmount: 0,
     },
     battle,
     log: [],

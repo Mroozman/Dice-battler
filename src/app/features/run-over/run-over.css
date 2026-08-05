@@ -1,0 +1,20 @@
+.run-over {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100dvh;
+  background: var(--surface);
+}
+
+.run-over h1 {
+  font-size: 3rem;
+  letter-spacing: 0.05em;
+}
+
+.run-over--victory h1 {
+  color: var(--player);
+}
+
+.run-over--defeat h1 {
+  color: var(--enemy);
+}

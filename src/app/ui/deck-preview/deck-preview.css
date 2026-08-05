@@ -1,0 +1,37 @@
+.deck-preview {
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent);
+  border-radius: 0.4rem;
+  padding: 0.5rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.4);
+  min-width: 8rem;
+}
+
+.deck-preview-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.deck-preview-item {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.25rem;
+  color: var(--ink);
+  background: var(--surface-2);
+}
+
+.deck-preview-item--attack {
+  background: color-mix(in srgb, var(--die-attack) 35%, var(--surface-2));
+}
+
+.deck-preview-item--heal {
+  background: color-mix(in srgb, var(--die-heal) 35%, var(--surface-2));
+}
+
+.deck-preview-item--shield {
+  background: color-mix(in srgb, var(--die-shield) 35%, var(--surface-2));
+}

@@ -71,5 +71,6 @@ export async function createRun(seed: string, rules: GameRules): Promise<RunStat
     playerMaxHp: rules.playerMaxHp,
     pendingReward: null,
     outcome: 'ongoing',
+    lastHealAmount: 0,
   };
 }

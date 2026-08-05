@@ -89,6 +89,7 @@ function makeRunState(stages: readonly StageDef[], overrides: Partial<RunState> 
     playerMaxHp: 20,
     pendingReward: null,
     outcome: 'ongoing',
+    lastHealAmount: 0,
     ...overrides,
   };
 }
@@ -120,6 +121,7 @@ function makeState(battle: BattleState, overrides: Partial<GameState> = {}): Gam
       playerMaxHp: battle.player.maxHp,
       pendingReward: null,
       outcome: 'ongoing',
+      lastHealAmount: 0,
     },
     battle,
     log: [],
@@ -1190,6 +1192,8 @@ describe('stage/advance', () => {
     expect(next.run.stageIndex).toBe(1);
     expect(next.run.playerHp).toBe(20); // capped: only 2 hp were missing, not the full 0.25 * 20 = 5
     expect(next.log.some((e) => e.tone === 'heal' && e.text.includes('regeneruje 2'))).toBe(true);
+    // M6 point 8: StageIntro reads this back to show "you regenerated N HP".
+    expect(next.run.lastHealAmount).toBe(2);
   });
 
   it('regenerates the full healBetweenStages amount when far below maxHp', () => {

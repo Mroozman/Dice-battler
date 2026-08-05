@@ -1,0 +1,14 @@
+<div class="reward-screen">
+  <h1 class="reward-screen-title">Nagroda</h1>
+  <p class="reward-screen-hp">HP: {{ playerHp() }}</p>
+
+  <div class="reward-screen-die">
+    <app-die [def]="reward()" status="pool" [interactive]="false" />
+  </div>
+
+  <p class="reward-screen-hint">Kliknij kość w talii, żeby ją zamienić na nową, albo zostaw talię bez zmian.</p>
+
+  <app-deck-panel [entries]="catalog()" mode="reward" (dieActivated)="onDieActivated($event)" />
+
+  <button type="button" class="reward-screen-skip" (click)="onSkip()">Zostaw talię bez zmian</button>
+</div>

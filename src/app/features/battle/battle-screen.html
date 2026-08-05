@@ -20,6 +20,7 @@
         [targetableIds]="store.targetableIds()"
         [phase]="battle.phase"
         [staged]="battle.staged"
+        [deckPreviewEnabled]="store.enemyDeckVisible()"
         (targetPicked)="onTargetPicked($event)"
       />
     </section>

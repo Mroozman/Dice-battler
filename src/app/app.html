@@ -1,1 +1,27 @@
-<app-battle-screen />
+@switch (store.screen()) {
+  @case ('stageIntro') {
+    <app-stage-intro
+      [stage]="store.run().stages[store.run().stageIndex]"
+      [healedBy]="store.run().lastHealAmount"
+      (continue)="onStageContinue()"
+    />
+  }
+  @case ('reward') {
+    <app-reward-screen
+      [reward]="store.run().pendingReward!"
+      [catalog]="store.rewardCatalogView()"
+      [playerHp]="store.run().playerHp"
+      (swap)="onRewardSwap($event)"
+      (skip)="onRewardSkip()"
+    />
+  }
+  @case ('runOver') {
+    <app-run-over [outcome]="store.run().outcome === 'defeat' ? 'defeat' : 'victory'" />
+  }
+  @case ('battle') {
+    <app-battle-screen />
+  }
+  @default {
+    <div class="app-loading">Ładowanie…</div>
+  }
+}

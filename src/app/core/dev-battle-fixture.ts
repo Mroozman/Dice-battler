@@ -97,6 +97,7 @@ export function createDevGameState(rules: GameRules): GameState {
       playerMaxHp: player.maxHp,
       pendingReward: null,
       outcome: 'ongoing',
+      lastHealAmount: 0,
     },
     battle,
     log: [],

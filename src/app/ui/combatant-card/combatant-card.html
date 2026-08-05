@@ -18,4 +18,7 @@
     [maxHp]="combatant().maxHp"
     [shield]="combatant().shield"
   />
+  @if (showDeckPreview()) {
+    <app-deck-preview class="combatant-card-deck-preview" [entries]="deckEntries()" />
+  }
 </button>

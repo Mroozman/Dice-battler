@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { CombatantCard } from './combatant-card';
 import type { Combatant, CombatantId } from '../../domain/model/combatant';
+import type { DieDef, DieId } from '../../domain/model/die';
 
 function makeCombatant(overrides: Partial<Combatant> = {}): Combatant {
   return {
@@ -77,5 +78,28 @@ describe('CombatantCard', () => {
     const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
     expect(button.classList.contains('combatant-card--player')).toBe(true);
     expect(button.classList.contains('combatant-card--enemy')).toBe(false);
+  });
+
+  it('does not render a deck preview by default', () => {
+    const fixture = TestBed.createComponent(CombatantCard);
+    fixture.componentRef.setInput('combatant', makeCombatant());
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-deck-preview')).toBeNull();
+  });
+
+  it('renders the deck preview (derived from the combatant catalog) when showDeckPreview is true', () => {
+    const die: DieDef = { id: 'e0-a' as DieId, sides: 6, kind: 'attack', label: 'D6' };
+    const combatant = makeCombatant({
+      deck: { catalog: { [die.id]: die }, pool: [die.id], hand: [], discard: [] },
+    });
+    const fixture = TestBed.createComponent(CombatantCard);
+    fixture.componentRef.setInput('combatant', combatant);
+    fixture.componentRef.setInput('showDeckPreview', true);
+    fixture.detectChanges();
+
+    const preview = fixture.nativeElement.querySelector('app-deck-preview');
+    expect(preview).toBeTruthy();
+    expect(preview.textContent.trim()).toBe('D6');
   });
 });

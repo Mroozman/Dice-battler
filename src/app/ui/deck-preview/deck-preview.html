@@ -1,0 +1,14 @@
+<div class="deck-preview" role="tooltip">
+  <ul class="deck-preview-list">
+    @for (entry of entries(); track entry.def.id) {
+      <li
+        class="deck-preview-item"
+        [class.deck-preview-item--attack]="entry.def.kind === 'attack'"
+        [class.deck-preview-item--heal]="entry.def.kind === 'heal'"
+        [class.deck-preview-item--shield]="entry.def.kind === 'shield'"
+      >
+        {{ entry.def.label }}
+      </li>
+    }
+  </ul>
+</div>

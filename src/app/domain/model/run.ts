@@ -30,4 +30,5 @@ export interface RunState {
   readonly playerMaxHp: number;
   readonly pendingReward: DieDef | null;
   readonly outcome: 'ongoing' | 'victory' | 'defeat';
+  readonly lastHealAmount: number;
 }

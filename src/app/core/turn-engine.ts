@@ -20,8 +20,17 @@ export class TurnEngine {
 
   constructor() {
     effect(() => {
+      if (this.advancing) {
+        return;
+      }
+
+      if (this.store.screen() === 'reward' && this.store.run().pendingReward === null) {
+        this.scheduleStageAdvance();
+        return;
+      }
+
       const battle = this.store.battle();
-      if (!battle || this.advancing) {
+      if (!battle) {
         return;
       }
 
@@ -94,6 +103,17 @@ export class TurnEngine {
       this.store.dispatch({ type: 'enemy/act', enemyId });
       this.advancing = false;
     }, this.rules.timing.enemyActMs);
+  }
+
+  private scheduleStageAdvance(): void {
+    this.advancing = true;
+    try {
+      this.store.dispatch({ type: 'stage/advance' });
+    } catch (error) {
+      console.error('TurnEngine stage/advance failed', error);
+    } finally {
+      this.advancing = false;
+    }
   }
 
   private scheduleFinishStage(): void {

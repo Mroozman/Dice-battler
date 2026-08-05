@@ -83,4 +83,11 @@ describe('GameStore', () => {
     expect(['attack', 'heal', 'shield']).toContain(store.log()[0].tone);
     expect(store.log()[0].text.length).toBeGreaterThan(0);
   });
+
+  it('exposes the run and hides the enemy deck preview before revealEnemyDeckFromStage', () => {
+    const store = TestBed.inject(GameStore);
+
+    expect(store.run().stageIndex).toBe(0);
+    expect(store.enemyDeckVisible()).toBe(false);
+  });
 });

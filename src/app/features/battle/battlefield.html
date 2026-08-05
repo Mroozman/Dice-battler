@@ -3,7 +3,12 @@
     @for (enemy of enemies(); track enemy.id; let i = $index) {
       <div class="enemy-slot">
         <span class="enemy-number">{{ i + 1 }}</span>
-        <app-combatant-card [combatant]="enemy" [state]="enemyState(enemy)" (picked)="onEnemyPicked(enemy.id)" />
+        <app-combatant-card
+          [combatant]="enemy"
+          [state]="enemyState(enemy)"
+          [showDeckPreview]="deckPreviewEnabled()"
+          (picked)="onEnemyPicked(enemy.id)"
+        />
       </div>
     }
   </div>

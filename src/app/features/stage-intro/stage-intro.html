@@ -1,0 +1,7 @@
+<div class="stage-intro">
+  <h1 class="stage-intro-title">{{ title() }}</h1>
+  @if (healedBy() > 0) {
+    <p class="stage-intro-heal">Odzyskujesz {{ healedBy() }} HP</p>
+  }
+  <button type="button" class="stage-intro-continue" (click)="onContinue()">Kontynuuj</button>
+</div>

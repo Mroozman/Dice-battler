@@ -598,7 +598,7 @@ function reduceStageAdvance(state: GameState, rules: ReduceRules): Reduction {
         ...state,
         battle: null,
         screen: 'stageIntro',
-        run: { ...state.run, stageIndex: nextStageIndex, playerHp },
+        run: { ...state.run, stageIndex: nextStageIndex, playerHp, lastHealAmount: healedAmount },
       },
       entry,
     ),

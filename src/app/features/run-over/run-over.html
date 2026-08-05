@@ -1,0 +1,7 @@
+<div
+  class="run-over"
+  [class.run-over--victory]="outcome() === 'victory'"
+  [class.run-over--defeat]="outcome() === 'defeat'"
+>
+  <h1>{{ outcome() === 'victory' ? 'Zwycięstwo!' : 'Porażka' }}</h1>
+</div>

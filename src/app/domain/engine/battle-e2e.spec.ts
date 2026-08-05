@@ -77,6 +77,7 @@ function makeState(battle: BattleState): GameState {
       playerMaxHp: battle.player.maxHp,
       pendingReward: null,
       outcome: 'ongoing',
+      lastHealAmount: 0,
     },
     battle,
     log: [],
