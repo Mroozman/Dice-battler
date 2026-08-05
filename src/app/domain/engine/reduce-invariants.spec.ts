@@ -9,7 +9,7 @@ import type { Deck } from '../model/deck';
 import type { DieDef, DieId, DieKind, DieSides } from '../model/die';
 
 const HAND_SIZE = 3;
-const RULES: ReduceRules = { handSize: 3, dicePerTurn: 2, effectFromRoll: (roll) => roll };
+const RULES: ReduceRules = { handSize: 3, dicePerTurn: 2, effectFromRoll: (roll) => roll, healBetweenStages: 0.25 };
 
 function makeDie(id: string, kind: DieKind, sides: DieSides): DieDef {
   return { id: id as DieId, sides, kind, label: `D${sides}` };

@@ -7,7 +7,7 @@ import type { Deck } from '../model/deck';
 import type { DieDef, DieId, DieKind, DieSides } from '../model/die';
 import type { EnemyBlueprint, RunState, StageDef } from '../model/run';
 
-const RULES: ReduceRules = { handSize: 3, dicePerTurn: 2, effectFromRoll: (roll) => roll };
+const RULES: ReduceRules = { handSize: 3, dicePerTurn: 2, effectFromRoll: (roll) => roll, healBetweenStages: 0.25 };
 
 function makeDie(id: string, kind: DieKind, sides: DieSides = 6): DieDef {
   return { id: id as DieId, sides, kind, label: `D${sides}` };
@@ -1152,5 +1152,93 @@ describe('reward/skip', () => {
     const state = makeVictoryState();
 
     expect(() => reduce(state, { type: 'reward/skip' }, RULES)).toThrow();
+  });
+});
+
+function makeStageDef(index: number, kind: 'group' | 'boss' = 'group'): StageDef {
+  return {
+    index,
+    kind,
+    tier: kind === 'boss' ? 'boss' : 1,
+    enemies: [makeEnemyBlueprint(`stage${index}-e0`, 5)],
+  };
+}
+
+describe('stage/advance', () => {
+  it('regenerates HP (capped at maxHp), logs it, and moves to stageIntro for the next stage', () => {
+    const state = makeVictoryState(); // player hp: 18, maxHp: 20
+    const withStages: GameState = {
+      ...state,
+      run: { ...state.run, stages: [makeStageDef(0), makeStageDef(1)], stageIndex: 0 },
+    };
+    const offered = reduce(withStages, { type: 'reward/offer', die: makeDie('reward-0', 'shield') }, RULES).state;
+    const afterSkip = reduce(offered, { type: 'reward/skip' }, RULES).state;
+
+    const { state: next } = reduce(afterSkip, { type: 'stage/advance' }, RULES);
+
+    expect(next.screen).toBe('stageIntro');
+    expect(next.battle).toBeNull();
+    expect(next.run.stageIndex).toBe(1);
+    expect(next.run.playerHp).toBe(20); // capped: only 2 hp were missing, not the full 0.25 * 20 = 5
+    expect(next.log.some((e) => e.tone === 'heal' && e.text.includes('regeneruje 2'))).toBe(true);
+  });
+
+  it('regenerates the full healBetweenStages amount when far below maxHp', () => {
+    const state = makeVictoryState();
+    const lowHpBattle: BattleState = { ...state.battle!, player: { ...state.battle!.player, hp: 5 } };
+    const withStages: GameState = {
+      ...state,
+      battle: lowHpBattle,
+      run: { ...state.run, stages: [makeStageDef(0), makeStageDef(1)], stageIndex: 0 },
+    };
+    const offered = reduce(withStages, { type: 'reward/offer', die: makeDie('reward-0', 'shield') }, RULES).state;
+    const afterSkip = reduce(offered, { type: 'reward/skip' }, RULES).state;
+
+    const { state: next } = reduce(afterSkip, { type: 'stage/advance' }, RULES);
+
+    expect(next.run.playerHp).toBe(10); // 5 + round(0.25 * 20) = 10
+  });
+
+  it('ends the run in victory after the boss stage, with no regen and no reward', () => {
+    const state = makeVictoryState();
+    const withBossStage: GameState = {
+      ...state,
+      run: { ...state.run, stages: [makeStageDef(0, 'boss')], stageIndex: 0 },
+    };
+
+    const { state: next } = reduce(withBossStage, { type: 'stage/advance' }, RULES);
+
+    expect(next.screen).toBe('runOver');
+    expect(next.run.outcome).toBe('victory');
+    expect(next.battle).toBeNull();
+    expect(next.run.playerHp).toBe(18);
+    expect(next.log.length).toBe(0);
+  });
+
+  it('throws without a finished battle', () => {
+    const state: GameState = { ...makeVictoryState(), battle: null };
+
+    expect(() => reduce(state, { type: 'stage/advance' }, RULES)).toThrow();
+  });
+
+  it('throws when the battle was won but the reward has not been offered/resolved yet', () => {
+    const state = makeVictoryState();
+    const withStages: GameState = {
+      ...state,
+      run: { ...state.run, stages: [makeStageDef(0), makeStageDef(1)], stageIndex: 0 },
+    };
+
+    expect(() => reduce(withStages, { type: 'stage/advance' }, RULES)).toThrow();
+  });
+
+  it('throws while still on the reward screen with a pending reward', () => {
+    const state = makeVictoryState();
+    const withStages: GameState = {
+      ...state,
+      run: { ...state.run, stages: [makeStageDef(0), makeStageDef(1)], stageIndex: 0 },
+    };
+    const offered = reduce(withStages, { type: 'reward/offer', die: makeDie('reward-0', 'attack') }, RULES).state;
+
+    expect(() => reduce(offered, { type: 'stage/advance' }, RULES)).toThrow();
   });
 });

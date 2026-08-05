@@ -87,3 +87,15 @@ export function logRoundStart(ctx: LogContext, player: Combatant): LogEntry {
     actorId: player.id,
   };
 }
+
+export function logRegen(ctx: LogContext, player: Combatant, healedAmount: number): LogEntry {
+  return {
+    id: nextId(ctx.log),
+    stageIndex: ctx.stageIndex,
+    round: ctx.round,
+    tone: 'heal',
+    text: `${player.name} regeneruje ${healedAmount} HP przed kolejnym etapem`,
+    actorId: player.id,
+    amount: healedAmount,
+  };
+}

@@ -7,7 +7,7 @@ import type { Combatant, CombatantId } from '../model/combatant';
 import type { Deck } from '../model/deck';
 import type { DieDef, DieId } from '../model/die';
 
-const RULES: ReduceRules = { handSize: 3, dicePerTurn: 2, effectFromRoll: (roll) => roll };
+const RULES: ReduceRules = { handSize: 3, dicePerTurn: 2, effectFromRoll: (roll) => roll, healBetweenStages: 0.25 };
 
 function makeDie(id: string): DieDef {
   return { id: id as DieId, sides: 8, kind: 'attack', label: 'D8' };

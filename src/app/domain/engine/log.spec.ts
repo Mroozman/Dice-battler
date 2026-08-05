@@ -1,4 +1,4 @@
-import { logAttack, logDeath, logHeal, logReshuffle, logRoundStart, logShield } from './log';
+import { logAttack, logDeath, logHeal, logRegen, logReshuffle, logRoundStart, logShield } from './log';
 import type { LogContext } from './log';
 import type { LogEntry } from '../model/log';
 import type { Combatant, CombatantId } from '../model/combatant';
@@ -86,6 +86,17 @@ describe('log entry constructors', () => {
     expect(entry.text).toBe('Runda 3 rozpoczęta');
     expect(entry.actorId).toBe(player.id);
     expect(entry.round).toBe(3);
+  });
+
+  it('logRegen announces between-stage healing, distinct from a die roll', () => {
+    const player = makeCombatant('player', 'Gracz');
+
+    const entry = logRegen(makeContext(), player, 5);
+
+    expect(entry.tone).toBe('heal');
+    expect(entry.text).toBe('Gracz regeneruje 5 HP przed kolejnym etapem');
+    expect(entry.actorId).toBe(player.id);
+    expect(entry.amount).toBe(5);
   });
 
   it('propagates stageIndex and round from the context onto every entry', () => {

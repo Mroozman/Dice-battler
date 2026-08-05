@@ -11,13 +11,14 @@ import { applyDamage, applyHeal, applyShield } from './combat';
 import { needsTarget, resolveEnemyTarget, targetableFor } from './targeting';
 import { GreedyPolicy } from '../ai/greedy-policy';
 import { battleOutcome } from './outcome';
-import { logAttack, logDeath, logHeal, logReshuffle, logRoundStart, logShield } from './log';
+import { logAttack, logDeath, logHeal, logRegen, logReshuffle, logRoundStart, logShield } from './log';
 import type { LogContext } from './log';
 
 export interface ReduceRules {
   readonly handSize: number;
   readonly dicePerTurn: number;
   readonly effectFromRoll: (roll: number) => number;
+  readonly healBetweenStages: number;
 }
 
 export type GameEffect =
@@ -60,7 +61,7 @@ export function reduce(state: GameState, action: GameAction, rules: ReduceRules)
     case 'reward/skip':
       return reduceRewardSkip(state);
     case 'stage/advance':
-      throw new Error('stage/advance is not implemented yet');
+      return reduceStageAdvance(state, rules);
   }
 }
 
@@ -546,4 +547,54 @@ function reduceRewardSkip(state: GameState): Reduction {
   }
 
   return noEffects({ ...state, run: { ...state.run, pendingReward: null } });
+}
+
+function reduceStageAdvance(state: GameState, rules: ReduceRules): Reduction {
+  const battle = state.battle;
+  if (!battle) {
+    throw new Error('Cannot advance the stage without a finished battle');
+  }
+
+  const currentStage = state.run.stages[state.run.stageIndex];
+  const viaReward = state.screen === 'reward' && state.run.pendingReward === null;
+  const viaBossVictory =
+    state.screen === 'battle' && currentStage?.kind === 'boss' && battleOutcome(battle) === 'victory';
+
+  if (!viaReward && !viaBossVictory) {
+    throw new Error(`Cannot advance the stage from screen ${state.screen}`);
+  }
+
+  const nextStageIndex = state.run.stageIndex + 1;
+
+  if (nextStageIndex >= state.run.stages.length) {
+    return noEffects({
+      ...state,
+      battle: null,
+      screen: 'runOver',
+      run: { ...state.run, stageIndex: nextStageIndex, playerHp: battle.player.hp, outcome: 'victory' },
+    });
+  }
+
+  const healedAmount = Math.max(
+    0,
+    Math.min(state.run.playerMaxHp - battle.player.hp, Math.round(rules.healBetweenStages * state.run.playerMaxHp)),
+  );
+  const playerHp = battle.player.hp + healedAmount;
+  const entry = logRegen(
+    { log: state.log, stageIndex: state.run.stageIndex, round: battle.round },
+    battle.player,
+    healedAmount,
+  );
+
+  return noEffects(
+    appendLog(
+      {
+        ...state,
+        battle: null,
+        screen: 'stageIntro',
+        run: { ...state.run, stageIndex: nextStageIndex, playerHp },
+      },
+      entry,
+    ),
+  );
 }
