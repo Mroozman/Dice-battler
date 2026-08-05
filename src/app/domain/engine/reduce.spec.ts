@@ -1052,3 +1052,105 @@ describe('stage/enter', () => {
     expect(() => reduce(state, { type: 'stage/enter' }, RULES)).toThrow();
   });
 });
+
+function makeVictoryState(): GameState {
+  const p1 = makeDie('p1', 'attack');
+  const p2 = makeDie('p2', 'heal');
+  const catalog = Object.fromEntries([p1, p2].map((d) => [d.id, d])) as Readonly<Record<DieId, DieDef>>;
+  const deck: Deck = { catalog, hand: [p1.id, p2.id], pool: [], discard: [] };
+  const player = makePlayer(deck, { hp: 18 });
+  const battle = makeBattle(player, [makeEnemy('e0', 0)]);
+
+  return {
+    schemaVersion: 1,
+    seed: 'reward-seed',
+    rngCursor: 0,
+    screen: 'battle',
+    run: makeRunState([], { playerCatalog: catalog }),
+    battle,
+    log: [],
+  };
+}
+
+describe('reward/offer', () => {
+  it('offers the reward and moves to the reward screen after a won battle', () => {
+    const die = makeDie('reward-0', 'attack', 8);
+    const state = makeVictoryState();
+
+    const { state: next } = reduce(state, { type: 'reward/offer', die }, RULES);
+
+    expect(next.screen).toBe('reward');
+    expect(next.run.pendingReward).toEqual(die);
+  });
+
+  it('throws outside the battle screen', () => {
+    const die = makeDie('reward-0', 'attack');
+    const state: GameState = { ...makeVictoryState(), screen: 'reward' };
+
+    expect(() => reduce(state, { type: 'reward/offer', die }, RULES)).toThrow();
+  });
+
+  it('throws when the battle has not actually been won', () => {
+    const die = makeDie('reward-0', 'attack');
+    const state = makeVictoryState();
+    const ongoingBattle = { ...state.battle!, enemies: [makeEnemy('e0', 5)] };
+
+    expect(() => reduce({ ...state, battle: ongoingBattle }, { type: 'reward/offer', die }, RULES)).toThrow();
+  });
+
+  it('throws when a reward is already pending', () => {
+    const die = makeDie('reward-0', 'attack');
+    const state = makeVictoryState();
+    const withPending: GameState = { ...state, run: { ...state.run, pendingReward: die } };
+
+    expect(() => reduce(withPending, { type: 'reward/offer', die }, RULES)).toThrow();
+  });
+});
+
+describe('reward/swap', () => {
+  it('replaces the chosen catalog die with the pending reward, keeping catalog size the same', () => {
+    const state = makeVictoryState();
+    const reward = makeDie('reward-0', 'shield', 10);
+    const offered = reduce(state, { type: 'reward/offer', die: reward }, RULES).state;
+
+    const { state: next } = reduce(offered, { type: 'reward/swap', replacedId: 'p1' as DieId }, RULES);
+
+    expect(Object.keys(next.run.playerCatalog).length).toBe(2);
+    expect(next.run.playerCatalog['p1' as DieId]).toBeUndefined();
+    expect(next.run.playerCatalog[reward.id]).toEqual(reward);
+    expect(next.run.pendingReward).toBeNull();
+  });
+
+  it('throws when there is no pending reward', () => {
+    const state = makeVictoryState();
+
+    expect(() => reduce(state, { type: 'reward/swap', replacedId: 'p1' as DieId }, RULES)).toThrow();
+  });
+
+  it('throws when replacing a die that does not exist in the catalog', () => {
+    const state = makeVictoryState();
+    const reward = makeDie('reward-0', 'shield');
+    const offered = reduce(state, { type: 'reward/offer', die: reward }, RULES).state;
+
+    expect(() => reduce(offered, { type: 'reward/swap', replacedId: 'ghost' as DieId }, RULES)).toThrow();
+  });
+});
+
+describe('reward/skip', () => {
+  it('clears the pending reward without touching the catalog', () => {
+    const state = makeVictoryState();
+    const reward = makeDie('reward-0', 'shield');
+    const offered = reduce(state, { type: 'reward/offer', die: reward }, RULES).state;
+
+    const { state: next } = reduce(offered, { type: 'reward/skip' }, RULES);
+
+    expect(next.run.pendingReward).toBeNull();
+    expect(next.run.playerCatalog).toEqual(offered.run.playerCatalog);
+  });
+
+  it('throws when there is no pending reward', () => {
+    const state = makeVictoryState();
+
+    expect(() => reduce(state, { type: 'reward/skip' }, RULES)).toThrow();
+  });
+});

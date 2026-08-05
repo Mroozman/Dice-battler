@@ -54,11 +54,11 @@ export function reduce(state: GameState, action: GameAction, rules: ReduceRules)
     case 'stage/enter':
       return reduceStageEnter(state, rules);
     case 'reward/offer':
-      throw new Error('reward/offer is not implemented yet');
+      return reduceRewardOffer(state, action.die);
     case 'reward/swap':
-      throw new Error('reward/swap is not implemented yet');
+      return reduceRewardSwap(state, action.replacedId);
     case 'reward/skip':
-      throw new Error('reward/skip is not implemented yet');
+      return reduceRewardSkip(state);
     case 'stage/advance':
       throw new Error('stage/advance is not implemented yet');
   }
@@ -501,4 +501,49 @@ function reduceStageEnter(state: GameState, rules: ReduceRules): Reduction {
     state: { ...state, battle, screen: 'battle', rngCursor: rng.cursor },
     effects: [],
   };
+}
+
+function reduceRewardOffer(state: GameState, die: DieDef): Reduction {
+  if (state.screen !== 'battle') {
+    throw new Error(`Cannot offer a reward outside battle (screen: ${state.screen})`);
+  }
+  if (state.run.pendingReward !== null) {
+    throw new Error('A reward is already pending');
+  }
+  if (!state.battle || battleOutcome(state.battle) !== 'victory') {
+    throw new Error('Cannot offer a reward without a won battle');
+  }
+
+  return noEffects({
+    ...state,
+    screen: 'reward',
+    run: { ...state.run, pendingReward: die },
+  });
+}
+
+function reduceRewardSwap(state: GameState, replacedId: DieId): Reduction {
+  if (state.screen !== 'reward' || !state.run.pendingReward) {
+    throw new Error('No pending reward to swap');
+  }
+  if (!(replacedId in state.run.playerCatalog)) {
+    throw new Error(`Unknown die to replace: ${replacedId}`);
+  }
+
+  const newDie = state.run.pendingReward;
+  const playerCatalog: Record<DieId, DieDef> = { ...state.run.playerCatalog };
+  delete playerCatalog[replacedId];
+  playerCatalog[newDie.id] = newDie;
+
+  return noEffects({
+    ...state,
+    run: { ...state.run, playerCatalog, pendingReward: null },
+  });
+}
+
+function reduceRewardSkip(state: GameState): Reduction {
+  if (state.screen !== 'reward' || !state.run.pendingReward) {
+    throw new Error('No pending reward to skip');
+  }
+
+  return noEffects({ ...state, run: { ...state.run, pendingReward: null } });
 }
