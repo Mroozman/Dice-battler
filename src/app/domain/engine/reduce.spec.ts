@@ -800,6 +800,11 @@ describe('battle ends: nothing further executes (M3 point 6)', () => {
 
     expect(battleAfter.resolveQueue).toEqual([]);
     expect(battleAfter.staged).toBeNull();
+
+    // M6: victory does not touch run-level state — that's for TurnEngine.finishStage() to decide
+    // (reward vs. straight to stage/advance, depending on whether this was the boss stage).
+    expect(next.screen).toBe('battle');
+    expect(next.run.outcome).toBe('ongoing');
   });
 
   it('stops resolving further queued dice the instant the player dies, even mid boss turn', () => {
@@ -823,6 +828,10 @@ describe('battle ends: nothing further executes (M3 point 6)', () => {
     expect(battleAfter.player.hp).toBe(0);
     expect(battleAfter.resolveQueue).toEqual([]);
     expect(battleAfter.staged).toBeNull();
+
+    // M6: defeat immediately ends the whole run — no orchestration needed, unlike victory.
+    expect(next.screen).toBe('runOver');
+    expect(next.run.outcome).toBe('defeat');
   });
 
   it('rejects any further action once the battle has ended', () => {

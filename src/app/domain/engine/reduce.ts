@@ -283,14 +283,20 @@ function reduceRollApply(state: GameState, rules: ReduceRules): Reduction {
 
   const ownerIsPlayer = ownerId === next.player.id;
 
-  if (battleOutcome(next) !== 'ongoing') {
+  const outcome = battleOutcome(next);
+  if (outcome !== 'ongoing') {
     next = {
       ...next,
       resolveQueue: [],
       staged: null,
       phase: ownerIsPlayer ? 'player.drawing' : 'enemy.acting',
     };
-    return { state: appendLog(withBattle(state, next), ...pendingEntries), effects };
+    const stateWithBattle = appendLog(withBattle(state, next), ...pendingEntries);
+    const finalState: GameState =
+      outcome === 'defeat'
+        ? { ...stateWithBattle, screen: 'runOver', run: { ...stateWithBattle.run, outcome: 'defeat' } }
+        : stateWithBattle;
+    return { state: finalState, effects };
   }
 
   let remaining = battle.resolveQueue.slice(1);

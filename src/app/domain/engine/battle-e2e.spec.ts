@@ -183,6 +183,10 @@ describe('a full battle, scripted end to end (M3 point 9)', () => {
     expect(state.battle!.resolveQueue).toEqual([]);
     expect(state.battle!.staged).toBeNull();
 
+    // M6: defeat immediately ends the whole run, not just the battle.
+    expect(state.screen).toBe('runOver');
+    expect(state.run.outcome).toBe('defeat');
+
     // M4: two player hits, a reshuffle during hand/refill, the enemy's hit, then death.
     expect(state.log.map((entry) => entry.tone)).toEqual(['attack', 'attack', 'system', 'attack', 'death']);
     expect(new Set(state.log.map((entry) => entry.id)).size).toBe(state.log.length);
