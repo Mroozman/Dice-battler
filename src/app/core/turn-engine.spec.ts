@@ -137,4 +137,29 @@ describe('TurnEngine', () => {
       expect(store.battleOutcome()).toBe('ongoing');
     }
   });
+
+  it('logs and recovers instead of crashing when finishStage has no real stage data for a won battle', async () => {
+    const store = TestBed.inject(GameStore);
+    TestBed.inject(TurnEngine);
+    TestBed.tick();
+
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    // The dev bootstrap (M6 point 9 will replace it with a real run) has no stages yet, so a won
+    // battle gives finishStage() nothing to advance/offer a reward for — it must fail safely, not
+    // crash or leave a dangling unhandled rejection.
+    const battle = store.state().battle!;
+    (store as any)._state.set({
+      ...store.state(),
+      battle: { ...battle, enemies: battle.enemies.map((e) => ({ ...e, hp: 0 })) },
+    });
+    TestBed.tick();
+
+    await vi.waitFor(() => {
+      expect(errorSpy).toHaveBeenCalled();
+    });
+    expect(String(errorSpy.mock.calls[0]?.[0])).toContain('finishStage');
+
+    errorSpy.mockRestore();
+  });
 });

@@ -1,8 +1,11 @@
 import { Injectable, effect, inject } from '@angular/core';
+import type { Faker } from '@faker-js/faker';
 import { createRng, rollDie } from '../domain/engine/rng';
 import type { Rng } from '../domain/engine/rng';
 import type { DieSides } from '../domain/model/die';
 import type { Combatant } from '../domain/model/combatant';
+import { createGameFaker } from '../domain/content/game-faker';
+import { rollReward } from '../domain/content/reward-factory';
 import { GameStore } from './game-store';
 import { RULES } from './tokens';
 
@@ -11,13 +14,23 @@ export class TurnEngine {
   private readonly store = inject(GameStore);
   private readonly rules = inject(RULES);
   private readonly rollRng: Rng = createRng(`${this.store.state().seed}-rolls`);
+  private readonly runFaker: Promise<Faker> = createGameFaker(`${this.store.state().seed}-rewards`);
   private advancing = false;
   private nextEnemyIndex = 0;
 
   constructor() {
     effect(() => {
       const battle = this.store.battle();
-      if (!battle || this.advancing || this.store.battleOutcome() !== 'ongoing') {
+      if (!battle || this.advancing) {
+        return;
+      }
+
+      const outcome = this.store.battleOutcome();
+      if (outcome === 'defeat') {
+        return;
+      }
+      if (outcome === 'victory') {
+        this.scheduleFinishStage();
         return;
       }
 
@@ -81,5 +94,33 @@ export class TurnEngine {
       this.store.dispatch({ type: 'enemy/act', enemyId });
       this.advancing = false;
     }, this.rules.timing.enemyActMs);
+  }
+
+  private scheduleFinishStage(): void {
+    this.advancing = true;
+    void this.finishStage();
+  }
+
+  private async finishStage(): Promise<void> {
+    try {
+      const { run } = this.store.state();
+      const currentStage = run.stages[run.stageIndex];
+
+      if (currentStage?.kind === 'boss') {
+        this.store.dispatch({ type: 'stage/advance' });
+        return;
+      }
+      if (!currentStage) {
+        throw new Error(`No stage at index ${run.stageIndex} to finish`);
+      }
+
+      const faker = await this.runFaker;
+      const die = rollReward(faker, run.stageIndex);
+      this.store.dispatch({ type: 'reward/offer', die });
+    } catch (error) {
+      console.error('TurnEngine.finishStage failed', error);
+    } finally {
+      this.advancing = false;
+    }
   }
 }
