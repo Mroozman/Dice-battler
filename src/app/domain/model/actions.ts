@@ -12,7 +12,7 @@ export type GameAction =
   | { type: 'turn/endPlayer' }
   | { type: 'enemy/act'; enemyId: CombatantId }
   | { type: 'turn/endRound' }
-  | { type: 'run/start'; run: RunState }
+  | { type: 'run/start'; run: RunState; seed: string }
   | { type: 'stage/enter' }
   | { type: 'reward/offer'; die: DieDef }
   | { type: 'reward/swap'; replacedId: DieId }

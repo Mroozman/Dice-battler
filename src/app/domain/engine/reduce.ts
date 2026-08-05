@@ -4,8 +4,9 @@ import type { BattleState, SelectedDie, StagedRoll } from '../model/battle';
 import type { Combatant, CombatantId } from '../model/combatant';
 import type { DieDef, DieId } from '../model/die';
 import type { LogEntry } from '../model/log';
+import type { RunState } from '../model/run';
 import { createRng } from './rng';
-import { discardUsed, draw } from './deck';
+import { buildBattleDeck, discardUsed, draw } from './deck';
 import { applyDamage, applyHeal, applyShield } from './combat';
 import { needsTarget, resolveEnemyTarget, targetableFor } from './targeting';
 import { GreedyPolicy } from '../ai/greedy-policy';
@@ -14,6 +15,7 @@ import { logAttack, logDeath, logHeal, logReshuffle, logRoundStart, logShield } 
 import type { LogContext } from './log';
 
 export interface ReduceRules {
+  readonly handSize: number;
   readonly dicePerTurn: number;
   readonly effectFromRoll: (roll: number) => number;
 }
@@ -48,9 +50,9 @@ export function reduce(state: GameState, action: GameAction, rules: ReduceRules)
     case 'turn/endRound':
       return reduceEndRound(state);
     case 'run/start':
-      throw new Error('run/start is not implemented yet');
+      return reduceRunStart(state, action.run, action.seed);
     case 'stage/enter':
-      throw new Error('stage/enter is not implemented yet');
+      return reduceStageEnter(state, rules);
     case 'reward/offer':
       throw new Error('reward/offer is not implemented yet');
     case 'reward/swap':
@@ -431,4 +433,72 @@ function reduceEndRound(state: GameState): Reduction {
   );
 
   return noEffects(appendLog(withBattle(state, nextBattle), entry));
+}
+
+function reduceRunStart(state: GameState, run: RunState, seed: string): Reduction {
+  if (state.screen !== 'title') {
+    throw new Error(`Cannot start a run outside the title screen (screen: ${state.screen})`);
+  }
+
+  return noEffects({
+    schemaVersion: 1,
+    seed,
+    rngCursor: 0,
+    screen: 'stageIntro',
+    run,
+    battle: null,
+    log: [],
+  });
+}
+
+function reduceStageEnter(state: GameState, rules: ReduceRules): Reduction {
+  if (state.screen !== 'stageIntro') {
+    throw new Error(`Cannot enter a stage outside stageIntro (screen: ${state.screen})`);
+  }
+  const stageDef = state.run.stages[state.run.stageIndex];
+  if (!stageDef) {
+    throw new Error(`No stage at index ${state.run.stageIndex}`);
+  }
+
+  const rng = createRng(state.seed, state.rngCursor);
+
+  const player: Combatant = {
+    id: 'player' as CombatantId,
+    name: 'Gracz',
+    archetypeKey: 'player',
+    kind: 'player',
+    hp: state.run.playerHp,
+    maxHp: state.run.playerMaxHp,
+    shield: 0,
+    deck: buildBattleDeck(state.run.playerCatalog, rules.handSize, rules.dicePerTurn, rng),
+    dicePerTurn: rules.dicePerTurn,
+  };
+
+  const enemies: Combatant[] = stageDef.enemies.map((blueprint) => ({
+    id: blueprint.id,
+    name: blueprint.name,
+    archetypeKey: blueprint.archetypeKey,
+    kind: 'enemy',
+    hp: blueprint.maxHp,
+    maxHp: blueprint.maxHp,
+    shield: 0,
+    deck: buildBattleDeck(blueprint.deck.catalog, 0, blueprint.dicePerTurn, rng),
+    dicePerTurn: blueprint.dicePerTurn,
+  }));
+
+  const battle: BattleState = {
+    round: 1,
+    phase: 'player.selecting',
+    activeCombatantId: player.id,
+    player,
+    enemies,
+    selection: [],
+    resolveQueue: [],
+    staged: null,
+  };
+
+  return {
+    state: { ...state, battle, screen: 'battle', rngCursor: rng.cursor },
+    effects: [],
+  };
 }

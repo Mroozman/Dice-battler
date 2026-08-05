@@ -5,8 +5,9 @@ import type { BattleState } from '../model/battle';
 import type { Combatant, CombatantId } from '../model/combatant';
 import type { Deck } from '../model/deck';
 import type { DieDef, DieId, DieKind, DieSides } from '../model/die';
+import type { EnemyBlueprint, RunState, StageDef } from '../model/run';
 
-const RULES: ReduceRules = { dicePerTurn: 2, effectFromRoll: (roll) => roll };
+const RULES: ReduceRules = { handSize: 3, dicePerTurn: 2, effectFromRoll: (roll) => roll };
 
 function makeDie(id: string, kind: DieKind, sides: DieSides = 6): DieDef {
   return { id: id as DieId, sides, kind, label: `D${sides}` };
@@ -58,6 +59,49 @@ function makeBattle(player: Combatant, enemies: readonly Combatant[], overrides:
     selection: [],
     resolveQueue: [],
     staged: null,
+    ...overrides,
+  };
+}
+
+function makeEnemyBlueprint(id: string, hp: number, dicePerTurn = 1): EnemyBlueprint {
+  const dice = [makeDie(`${id}-a`, 'attack'), makeDie(`${id}-b`, 'attack')];
+  const catalog = Object.fromEntries(dice.map((d) => [d.id, d])) as Readonly<Record<DieId, DieDef>>;
+  return {
+    id: id as CombatantId,
+    archetypeKey: 'test',
+    name: id,
+    hp,
+    maxHp: hp,
+    shield: 0,
+    dicePerTurn,
+    deck: { catalog, pool: dice.map((d) => d.id), hand: [], discard: [] },
+  };
+}
+
+function makeRunState(stages: readonly StageDef[], overrides: Partial<RunState> = {}): RunState {
+  const playerDice = ['p1', 'p2', 'p3', 'p4', 'p5'].map((id) => makeDie(id, 'attack'));
+  const playerCatalog = Object.fromEntries(playerDice.map((d) => [d.id, d])) as Readonly<Record<DieId, DieDef>>;
+  return {
+    stageIndex: 0,
+    stages,
+    playerCatalog,
+    playerHp: 15,
+    playerMaxHp: 20,
+    pendingReward: null,
+    outcome: 'ongoing',
+    ...overrides,
+  };
+}
+
+function makeTitleState(overrides: Partial<GameState> = {}): GameState {
+  return {
+    schemaVersion: 1,
+    seed: 'placeholder-seed',
+    rngCursor: 0,
+    screen: 'title',
+    run: makeRunState([]),
+    battle: null,
+    log: [],
     ...overrides,
   };
 }
@@ -921,5 +965,90 @@ describe('reduce populates the battle log (M4 point 2)', () => {
 
     const ids = state.log.map((e) => e.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe('run/start', () => {
+  it('initializes a fresh GameState from the given run and seed', () => {
+    const run = makeRunState([]);
+    const state = makeTitleState();
+
+    const { state: next } = reduce(state, { type: 'run/start', run, seed: 'new-seed' }, RULES);
+
+    expect(next.screen).toBe('stageIntro');
+    expect(next.seed).toBe('new-seed');
+    expect(next.rngCursor).toBe(0);
+    expect(next.battle).toBeNull();
+    expect(next.run).toBe(run);
+    expect(next.log).toEqual([]);
+  });
+
+  it('throws when dispatched outside the title screen', () => {
+    const run = makeRunState([]);
+    const state = makeTitleState({ screen: 'battle' });
+
+    expect(() => reduce(state, { type: 'run/start', run, seed: 'new-seed' }, RULES)).toThrow();
+  });
+});
+
+describe('stage/enter', () => {
+  it('builds a fresh battle from the current stage', () => {
+    const enemy = makeEnemyBlueprint('e0', 6);
+    const stage: StageDef = { index: 0, kind: 'group', tier: 1, enemies: [enemy] };
+    const run = makeRunState([stage], { playerHp: 14, playerMaxHp: 20 });
+    const state = makeTitleState({ screen: 'stageIntro', run });
+
+    const { state: next } = reduce(state, { type: 'stage/enter' }, RULES);
+    const battle = next.battle!;
+
+    expect(next.screen).toBe('battle');
+    expect(battle.round).toBe(1);
+    expect(battle.phase).toBe('player.selecting');
+    expect(battle.player.hp).toBe(14);
+    expect(battle.player.maxHp).toBe(20);
+    expect(battle.player.deck.hand.length).toBe(RULES.handSize);
+    expect(battle.enemies.length).toBe(1);
+    expect(battle.enemies[0].hp).toBe(6);
+    expect(battle.enemies[0].deck.hand).toEqual([]);
+    expect(battle.enemies[0].deck.pool.length).toBe(2);
+  });
+
+  it('advances rngCursor while shuffling the fresh battle decks', () => {
+    const stage: StageDef = { index: 0, kind: 'group', tier: 1, enemies: [makeEnemyBlueprint('e0', 6)] };
+    const state = makeTitleState({ screen: 'stageIntro', run: makeRunState([stage]), rngCursor: 0 });
+
+    const { state: next } = reduce(state, { type: 'stage/enter' }, RULES);
+
+    expect(next.rngCursor).toBeGreaterThan(0);
+  });
+
+  it('builds a battle deck for every enemy blueprint in the stage', () => {
+    const stage: StageDef = {
+      index: 0,
+      kind: 'group',
+      tier: 1,
+      enemies: [makeEnemyBlueprint('e0', 6), makeEnemyBlueprint('e1', 8, 2)],
+    };
+    const state = makeTitleState({ screen: 'stageIntro', run: makeRunState([stage]) });
+
+    const { state: next } = reduce(state, { type: 'stage/enter' }, RULES);
+    const [first, second] = next.battle!.enemies;
+
+    expect(first.dicePerTurn).toBe(1);
+    expect(second.dicePerTurn).toBe(2);
+    expect(second.hp).toBe(8);
+  });
+
+  it('throws when dispatched outside stageIntro', () => {
+    const stage: StageDef = { index: 0, kind: 'group', tier: 1, enemies: [makeEnemyBlueprint('e0', 6)] };
+    const state = makeTitleState({ screen: 'battle', run: makeRunState([stage]) });
+
+    expect(() => reduce(state, { type: 'stage/enter' }, RULES)).toThrow();
+  });
+
+  it('throws when stageIndex points past the end of the stage list', () => {
+    const state = makeTitleState({ screen: 'stageIntro', run: makeRunState([]) });
+
+    expect(() => reduce(state, { type: 'stage/enter' }, RULES)).toThrow();
   });
 });
