@@ -2,6 +2,14 @@ import { TestBed } from '@angular/core/testing';
 import { BattleScreen } from './battle-screen';
 import { GameStore } from '../../core/game-store';
 import { TurnEngine } from '../../core/turn-engine';
+import { NEW_RUN_SEED } from '../../core/tokens';
+
+const FIXED_RUN_SEED = 'battle-screen-spec-seed';
+
+async function enterFirstBattle(store: GameStore): Promise<void> {
+  await store.ready;
+  store.dispatch({ type: 'stage/enter' });
+}
 
 function advance(): void {
   vi.advanceTimersByTime(1000);
@@ -11,27 +19,32 @@ function advance(): void {
 describe('BattleScreen', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [{ provide: NEW_RUN_SEED, useValue: () => FIXED_RUN_SEED }],
+    });
   });
 
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  it('renders the deck panel, battlefield and hand for the dev battle', () => {
+  it('renders the deck panel, battlefield and hand for the current stage', async () => {
+    const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
     const fixture = TestBed.createComponent(BattleScreen);
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
     expect(root.querySelector('app-deck-panel')).toBeTruthy();
-    expect(root.querySelectorAll('.battlefield .combatant-card').length).toBe(3); // 2 enemies + player
+    expect(root.querySelectorAll('.battlefield .combatant-card').length).toBe(store.enemies().length + 1);
     expect(root.querySelectorAll('.hand-bar .die').length).toBe(3);
   });
 
-  it('plays a full turn end to end through DOM clicks alone', () => {
+  it('plays a full turn end to end through DOM clicks alone', async () => {
+    const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
     const fixture = TestBed.createComponent(BattleScreen);
     fixture.detectChanges();
-    const store = TestBed.inject(GameStore);
     TestBed.inject(TurnEngine);
     TestBed.tick();
 
@@ -83,10 +96,11 @@ describe('BattleScreen', () => {
     expect(fixture.nativeElement.querySelectorAll('.battle-log-entry').length).toBe(store.log().length);
   });
 
-  it('shows a victory/defeat placeholder instead of the board once the battle ends', () => {
+  it('shows a victory/defeat placeholder instead of the board once the battle ends', async () => {
+    const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
     const fixture = TestBed.createComponent(BattleScreen);
     fixture.detectChanges();
-    const store = TestBed.inject(GameStore);
     TestBed.inject(TurnEngine);
     TestBed.tick();
 

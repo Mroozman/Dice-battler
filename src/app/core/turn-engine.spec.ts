@@ -1,6 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { GameStore } from './game-store';
 import { TurnEngine } from './turn-engine';
+import { NEW_RUN_SEED } from './tokens';
+
+const FIXED_RUN_SEED = 'fixed-run-seed-4';
+
+async function enterFirstBattle(store: GameStore): Promise<void> {
+  await store.ready;
+  store.dispatch({ type: 'stage/enter' });
+}
 
 function selectFullHand(store: GameStore): void {
   const battle = store.state().battle!;
@@ -32,18 +40,31 @@ function playUntil(store: GameStore, done: () => boolean, maxSteps = 200): void 
   }
 }
 
+/** Force-wins the current battle by zeroing every enemy's hp, bypassing the store's private state. */
+function forceVictory(store: GameStore): void {
+  const battle = store.state().battle!;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (store as any)._state.set({
+    ...store.state(),
+    battle: { ...battle, enemies: battle.enemies.map((e) => ({ ...e, hp: 0 })) },
+  });
+}
+
 describe('TurnEngine', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [{ provide: NEW_RUN_SEED, useValue: () => FIXED_RUN_SEED }],
+    });
   });
 
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  it('drives a full player turn from confirm to enemy.acting without further user input', () => {
+  it('drives a full player turn from confirm to enemy.acting without further user input', async () => {
     const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
     TestBed.inject(TurnEngine);
     TestBed.tick();
 
@@ -55,8 +76,9 @@ describe('TurnEngine', () => {
     expect(store.battle()!.phase).toBe('enemy.acting');
   });
 
-  it('drives the enemy phase too, reaching a stable idle point at player.selecting or battle end', () => {
+  it('drives the enemy phase too, reaching a stable idle point at player.selecting or battle end', async () => {
     const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
     TestBed.inject(TurnEngine);
     TestBed.tick();
 
@@ -72,8 +94,9 @@ describe('TurnEngine', () => {
     expect(store.state()).toEqual(stateAfterRound);
   });
 
-  it('processes enemies left to right and skips dead ones, never acting twice per round', () => {
+  it('processes enemies left to right and skips dead ones, never acting twice per round', async () => {
     const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
     TestBed.inject(TurnEngine);
     TestBed.tick();
 
@@ -101,8 +124,9 @@ describe('TurnEngine', () => {
     }
   });
 
-  it('refills the hand back to its original size by the end of the player turn', () => {
+  it('refills the hand back to its original size by the end of the player turn', async () => {
     const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
     TestBed.inject(TurnEngine);
     TestBed.tick();
 
@@ -115,8 +139,9 @@ describe('TurnEngine', () => {
     expect(store.hand().length).toBe(handSizeBefore);
   });
 
-  it('stops scheduling anything once the battle has ended', () => {
+  it('stops scheduling anything once the battle has ended', async () => {
     const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
     TestBed.inject(TurnEngine);
     TestBed.tick();
 
@@ -127,39 +152,80 @@ describe('TurnEngine', () => {
       playUntil(store, () => store.battle()!.phase === 'player.selecting' || store.battleOutcome() !== 'ongoing');
     }
 
-    if (store.battleOutcome() !== 'ongoing') {
+    if (store.battleOutcome() === 'defeat') {
       const stateAfterEnd = store.state();
       advance();
       advance();
       expect(store.state()).toEqual(stateAfterEnd);
     } else {
-      // Extremely unlikely with this seed/rules within 20 rounds, but don't fail the suite over it.
-      expect(store.battleOutcome()).toBe('ongoing');
+      // Victory now triggers finishStage() (reward or stage/advance) — covered by the dedicated
+      // tests below. Defeat is the only outcome expected to go fully idle within this loop.
+      expect(['ongoing', 'victory']).toContain(store.battleOutcome());
     }
   });
 
-  it('logs and recovers instead of crashing when finishStage has no real stage data for a won battle', async () => {
+  it('offers a reward and moves to the reward screen after winning a non-boss stage', async () => {
     const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
     TestBed.inject(TurnEngine);
     TestBed.tick();
 
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(store.run().stages[store.run().stageIndex].kind).toBe('group');
 
-    // The dev bootstrap (M6 point 9 will replace it with a real run) has no stages yet, so a won
-    // battle gives finishStage() nothing to advance/offer a reward for — it must fail safely, not
-    // crash or leave a dangling unhandled rejection.
-    const battle = store.state().battle!;
-    (store as any)._state.set({
-      ...store.state(),
-      battle: { ...battle, enemies: battle.enemies.map((e) => ({ ...e, hp: 0 })) },
-    });
+    forceVictory(store);
     TestBed.tick();
 
-    await vi.waitFor(() => {
-      expect(errorSpy).toHaveBeenCalled();
-    });
-    expect(String(errorSpy.mock.calls[0]?.[0])).toContain('finishStage');
+    for (let i = 0; i < 10 && store.screen() !== 'reward'; i++) {
+      await vi.advanceTimersByTimeAsync(1000);
+      TestBed.tick();
+    }
 
-    errorSpy.mockRestore();
+    expect(store.screen()).toBe('reward');
+    expect(store.run().pendingReward).not.toBeNull();
+  });
+
+  it('reacts to a resolved reward by advancing to the next stage intro', async () => {
+    const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
+    TestBed.inject(TurnEngine);
+    TestBed.tick();
+
+    forceVictory(store);
+    TestBed.tick();
+    for (let i = 0; i < 10 && store.screen() !== 'reward'; i++) {
+      await vi.advanceTimersByTimeAsync(1000);
+      TestBed.tick();
+    }
+    expect(store.screen()).toBe('reward');
+
+    store.dispatch({ type: 'reward/skip' });
+    TestBed.tick();
+
+    expect(store.screen()).toBe('stageIntro');
+    expect(store.run().stageIndex).toBe(1);
+  });
+
+  it('advances straight to the next stage (or runOver) with no reward after a boss victory', async () => {
+    const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
+    TestBed.inject(TurnEngine);
+    TestBed.tick();
+
+    const bossIndex = store.run().stages.length - 1;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (store as any)._state.set({
+      ...store.state(),
+      run: { ...store.run(), stageIndex: bossIndex },
+    });
+    forceVictory(store);
+    TestBed.tick();
+    for (let i = 0; i < 10 && store.screen() === 'battle'; i++) {
+      await vi.advanceTimersByTimeAsync(1000);
+      TestBed.tick();
+    }
+
+    expect(store.run().pendingReward).toBeNull();
+    expect(store.screen()).toBe('runOver');
+    expect(store.run().outcome).toBe('victory');
   });
 });

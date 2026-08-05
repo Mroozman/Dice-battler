@@ -8,15 +8,49 @@ import { targetableFor } from '../domain/engine/targeting';
 import { battleOutcome, type BattleOutcome } from '../domain/engine/outcome';
 import type { DieDef, DieId } from '../domain/model/die';
 import type { LogEntry } from '../domain/model/log';
-import { RULES } from './tokens';
-import { createDevGameState } from './dev-battle-fixture';
+import { createRun } from '../domain/content/run-factory';
+import { NEW_RUN_SEED, RULES } from './tokens';
+
+function createLoadingState(): GameState {
+  return {
+    schemaVersion: 1,
+    seed: '',
+    rngCursor: 0,
+    screen: 'title',
+    run: {
+      stageIndex: 0,
+      stages: [],
+      playerCatalog: {},
+      playerHp: 0,
+      playerMaxHp: 0,
+      pendingReward: null,
+      outcome: 'ongoing',
+      lastHealAmount: 0,
+    },
+    battle: null,
+    log: [],
+  };
+}
 
 @Injectable({ providedIn: 'root' })
 export class GameStore {
   private readonly rules = inject(RULES);
-  private readonly _state = signal<GameState>(createDevGameState(this.rules));
+  private readonly newRunSeed = inject(NEW_RUN_SEED);
+  private readonly _state = signal<GameState>(createLoadingState());
+
+  readonly ready: Promise<void>;
 
   readonly dicePerTurn = this.rules.dicePerTurn;
+
+  constructor() {
+    this.ready = this.bootstrap();
+  }
+
+  private async bootstrap(): Promise<void> {
+    const seed = this.newRunSeed();
+    const run = await createRun(seed, this.rules);
+    this.dispatch({ type: 'run/start', run, seed });
+  }
 
   readonly state = this._state.asReadonly();
   readonly screen = computed(() => this._state().screen);
@@ -40,7 +74,9 @@ export class GameStore {
     return deckView({ catalog, pool: Object.keys(catalog) as DieId[], hand: [], discard: [] });
   });
 
-  readonly targetableIds = computed<readonly CombatantId[]>(() => targetableFor(this._state().battle));
+  readonly targetableIds = computed<readonly CombatantId[]>(() =>
+    targetableFor(this._state().battle),
+  );
 
   readonly enemyDeckVisible = computed(
     () => this._state().run.stageIndex >= this.rules.revealEnemyDeckFromStage,

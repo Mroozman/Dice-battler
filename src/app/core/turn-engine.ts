@@ -24,8 +24,14 @@ export class TurnEngine {
         return;
       }
 
-      if (this.store.screen() === 'reward' && this.store.run().pendingReward === null) {
+      const screen = this.store.screen();
+
+      if (screen === 'reward' && this.store.run().pendingReward === null) {
         this.scheduleStageAdvance();
+        return;
+      }
+
+      if (screen !== 'battle') {
         return;
       }
 

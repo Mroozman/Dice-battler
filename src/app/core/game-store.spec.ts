@@ -1,6 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { GameStore } from './game-store';
 
+async function enterFirstBattle(store: GameStore): Promise<void> {
+  await store.ready;
+  store.dispatch({ type: 'stage/enter' });
+}
+
 function selectFullHand(store: GameStore): void {
   const battle = store.state().battle!;
   const chosen = store.hand().slice(0, battle.player.dicePerTurn);
@@ -18,38 +23,54 @@ describe('GameStore', () => {
     TestBed.configureTestingModule({});
   });
 
-  it('bootstraps a playable battle', () => {
+  it('bootstraps a real, faker-generated run and shows the stage intro first', async () => {
     const store = TestBed.inject(GameStore);
 
+    await store.ready;
+
+    expect(store.screen()).toBe('stageIntro');
+    expect(store.run().stages.length).toBe(4);
+    expect(store.run().stageIndex).toBe(0);
+  });
+
+  it('builds a playable battle once the stage is entered', async () => {
+    const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
+
     expect(store.screen()).toBe('battle');
-    expect(store.enemies().length).toBe(2);
+    expect(store.enemies().length).toBeGreaterThanOrEqual(1);
+    expect(store.enemies().length).toBeLessThanOrEqual(3);
     expect(store.hand().length).toBe(3);
     expect(store.canConfirm()).toBe(false);
   });
 
-  it('lists only living enemies as targetable', () => {
+  it('lists every living enemy as targetable', async () => {
     const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
 
-    expect(store.targetableIds().length).toBe(2);
+    expect(store.targetableIds().length).toBe(store.enemies().length);
   });
 
-  it('exposes the full starter catalog through deckView', () => {
+  it('exposes the full starter catalog through deckView', async () => {
     const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
 
     expect(store.deckView().length).toBe(6);
     expect(store.deckView().every((entry) => entry.status === 'pool' || entry.status === 'hand')).toBe(true);
   });
 
-  it('becomes confirmable once dicePerTurn dice are selected and targeted', () => {
+  it('becomes confirmable once dicePerTurn dice are selected and targeted', async () => {
     const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
 
     selectFullHand(store);
 
     expect(store.canConfirm()).toBe(true);
   });
 
-  it('moves confirmed dice to discard once player/confirm is dispatched', () => {
+  it('moves confirmed dice to discard once player/confirm is dispatched', async () => {
     const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
 
     selectFullHand(store);
     store.dispatch({ type: 'player/confirm' });
@@ -59,20 +80,23 @@ describe('GameStore', () => {
     expect(store.state().battle!.phase).toBe('player.rolling');
   });
 
-  it('reports the battle as ongoing for a freshly bootstrapped fight', () => {
+  it('reports the battle as ongoing for a freshly entered fight', async () => {
     const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
 
     expect(store.battleOutcome()).toBe('ongoing');
   });
 
-  it('starts with an empty log for a freshly bootstrapped fight', () => {
+  it('starts with an empty log for a freshly entered fight', async () => {
     const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
 
     expect(store.log()).toEqual([]);
   });
 
-  it('grows the log once a roll is revealed and applied', () => {
+  it('grows the log once a roll is revealed and applied', async () => {
     const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
 
     selectFullHand(store);
     store.dispatch({ type: 'player/confirm' });
@@ -84,8 +108,9 @@ describe('GameStore', () => {
     expect(store.log()[0].text.length).toBeGreaterThan(0);
   });
 
-  it('exposes the run and hides the enemy deck preview before revealEnemyDeckFromStage', () => {
+  it('hides the enemy deck preview before revealEnemyDeckFromStage', async () => {
     const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
 
     expect(store.run().stageIndex).toBe(0);
     expect(store.enemyDeckVisible()).toBe(false);
