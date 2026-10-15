@@ -7,6 +7,10 @@ import type { EnemyBlueprint, RunState, StageDef } from '../model/run';
 import type { CombatantId } from '../model/combatant';
 import type { DieDef, DieId } from '../model/die';
 
+const STAGE_0_ENEMIES: readonly [number, number] = [1, 2];
+const STAGE_1_ENEMIES: readonly [number, number] = [2, 3];
+const STAGE_2_ENEMIES: readonly [number, number] = [2, 3];
+
 function spawn(f: Faker, archetype: ArchetypeDef, slot: number): EnemyBlueprint {
   const maxHp = f.number.int({ min: archetype.hp[0], max: archetype.hp[1] });
   const id = `e${slot}` as CombatantId;
@@ -54,9 +58,9 @@ export async function createRun(seed: string, rules: GameRules): Promise<RunStat
   }
 
   const stages: readonly StageDef[] = [
-    buildGroupStage(f, pool, 0, 1, f.number.int({ min: 1, max: 3 })),
-    buildGroupStage(f, pool, 1, 2, f.number.int({ min: 2, max: 3 })),
-    buildGroupStage(f, pool, 2, 3, f.number.int({ min: 3, max: 4 })),
+    buildGroupStage(f, pool, 0, 1, f.number.int({ min: STAGE_0_ENEMIES[0], max: STAGE_0_ENEMIES[1] })),
+    buildGroupStage(f, pool, 1, 2, f.number.int({ min: STAGE_1_ENEMIES[0], max: STAGE_1_ENEMIES[1] })),
+    buildGroupStage(f, pool, 2, 3, f.number.int({ min: STAGE_2_ENEMIES[0], max: STAGE_2_ENEMIES[1] })),
     { index: 3, kind: 'boss', tier: 'boss', enemies: [spawn(f, boss, 0)] },
   ];
 

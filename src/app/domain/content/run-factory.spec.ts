@@ -33,11 +33,11 @@ describe('createRun', () => {
     const [stage1, stage2, stage3, bossStage] = run.stages;
 
     expect(stage1.enemies.length).toBeGreaterThanOrEqual(1);
-    expect(stage1.enemies.length).toBeLessThanOrEqual(3);
+    expect(stage1.enemies.length).toBeLessThanOrEqual(2);
     expect(stage2.enemies.length).toBeGreaterThanOrEqual(2);
     expect(stage2.enemies.length).toBeLessThanOrEqual(3);
-    expect(stage3.enemies.length).toBeGreaterThanOrEqual(3);
-    expect(stage3.enemies.length).toBeLessThanOrEqual(4);
+    expect(stage3.enemies.length).toBeGreaterThanOrEqual(2);
+    expect(stage3.enemies.length).toBeLessThanOrEqual(3);
     expect(bossStage.enemies.length).toBe(1);
 
     for (const enemy of stage1.enemies) expect(tierByKey.get(enemy.archetypeKey)).toBe(1);
@@ -52,8 +52,8 @@ describe('createRun', () => {
     const boss = run.stages[3].enemies[0];
 
     expect(boss.hp).toBe(boss.maxHp);
-    expect(boss.hp).toBeGreaterThanOrEqual(30);
-    expect(boss.hp).toBeLessThanOrEqual(36);
+    expect(boss.hp).toBeGreaterThanOrEqual(10);
+    expect(boss.hp).toBeLessThanOrEqual(13);
     expect(boss.name).toContain('Pożeracz');
   });
 

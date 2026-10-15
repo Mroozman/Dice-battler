@@ -37,7 +37,7 @@ export const RULES: GameRules = {
   ],
   effectFromRoll: (roll) => roll,
   timing: { rollMs: 600, impactMs: 350, drawMs: 250, enemyActMs: 700 },
-  healBetweenStages: 0.25,
+  healBetweenStages: 0.4,
   revealEnemyDeckFromStage: 1,
   rewardAfterBoss: false,
 };

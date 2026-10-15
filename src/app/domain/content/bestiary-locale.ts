@@ -61,7 +61,7 @@ export const bestiaryLocale = {
         key: 'ravager',
         title: 'Oprawca',
         tier: 3,
-        hp: [12, 16],
+        hp: [7, 9],
         dicePerTurn: 1,
         deck: [
           { sides: 8, kind: 'attack', count: 4 },
@@ -72,7 +72,7 @@ export const bestiaryLocale = {
         key: 'warden',
         title: 'Nadzorca',
         tier: 3,
-        hp: [14, 18],
+        hp: [7, 10],
         dicePerTurn: 1,
         deck: [
           { sides: 8, kind: 'attack', count: 2 },
@@ -84,7 +84,7 @@ export const bestiaryLocale = {
         key: 'devourer',
         title: 'Pożeracz',
         tier: 'boss',
-        hp: [30, 36],
+        hp: [10, 13],
         dicePerTurn: 2,
         deck: [
           { sides: 12, kind: 'attack', count: 4 },
