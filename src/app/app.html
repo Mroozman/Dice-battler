@@ -1,4 +1,7 @@
 @switch (store.screen()) {
+  @case ('title') {
+    <app-title-screen (start)="onTitleStart()" />
+  }
   @case ('stageIntro') {
     <app-stage-intro
       [stage]="store.run().stages[store.run().stageIndex]"

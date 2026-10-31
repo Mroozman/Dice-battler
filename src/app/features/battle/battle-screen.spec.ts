@@ -7,7 +7,7 @@ import { NEW_RUN_SEED } from '../../core/tokens';
 const FIXED_RUN_SEED = 'battle-screen-spec-seed';
 
 async function enterFirstBattle(store: GameStore): Promise<void> {
-  await store.ready;
+  await store.startNewRun();
   store.dispatch({ type: 'stage/enter' });
 }
 

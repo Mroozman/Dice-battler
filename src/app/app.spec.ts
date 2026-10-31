@@ -15,15 +15,20 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('shows a loading placeholder before the run is ready, then the stage intro', async () => {
+  it('shows the title screen, then the stage intro once a new run is started', async () => {
     const fixture = TestBed.createComponent(App);
     const compiled = fixture.nativeElement as HTMLElement;
     fixture.detectChanges();
 
-    expect(compiled.querySelector('.app-loading')).toBeTruthy();
+    const startButton = compiled.querySelector('.title-screen-start') as HTMLButtonElement;
+    expect(startButton).toBeTruthy();
+    expect(compiled.querySelector('app-stage-intro')).toBeNull();
+
+    startButton.click();
+    fixture.detectChanges();
 
     const store = TestBed.inject(GameStore);
-    await store.ready;
+    await store.startNewRun();
     fixture.detectChanges();
 
     expect(compiled.querySelector('app-stage-intro')).toBeTruthy();
@@ -32,7 +37,7 @@ describe('App', () => {
   it('renders the battle screen once the stage is entered', async () => {
     const fixture = TestBed.createComponent(App);
     const store = TestBed.inject(GameStore);
-    await store.ready;
+    await store.startNewRun();
     store.dispatch({ type: 'stage/enter' });
     fixture.detectChanges();
 

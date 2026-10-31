@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { GameStore } from './game-store';
 
 async function enterFirstBattle(store: GameStore): Promise<void> {
-  await store.ready;
+  await store.startNewRun();
   store.dispatch({ type: 'stage/enter' });
 }
 
@@ -26,7 +26,7 @@ describe('GameStore', () => {
   it('bootstraps a real, faker-generated run and shows the stage intro first', async () => {
     const store = TestBed.inject(GameStore);
 
-    await store.ready;
+    await store.startNewRun();
 
     expect(store.screen()).toBe('stageIntro');
     expect(store.run().stages.length).toBe(4);

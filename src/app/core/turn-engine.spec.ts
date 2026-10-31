@@ -9,7 +9,7 @@ import { REDUCED_TIMING } from '../domain/engine/rules';
 const FIXED_RUN_SEED = 'fixed-run-seed-4';
 
 async function enterFirstBattle(store: GameStore): Promise<void> {
-  await store.ready;
+  await store.startNewRun();
   store.dispatch({ type: 'stage/enter' });
 }
 

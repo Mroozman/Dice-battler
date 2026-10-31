@@ -38,12 +38,13 @@ export class GameStore {
   private readonly newRunSeed = inject(NEW_RUN_SEED);
   private readonly _state = signal<GameState>(createLoadingState());
 
-  readonly ready: Promise<void>;
+  private pendingStart: Promise<void> | null = null;
 
   readonly dicePerTurn = this.rules.dicePerTurn;
 
-  constructor() {
-    this.ready = this.bootstrap();
+  startNewRun(): Promise<void> {
+    this.pendingStart ??= this.bootstrap();
+    return this.pendingStart;
   }
 
   private async bootstrap(): Promise<void> {

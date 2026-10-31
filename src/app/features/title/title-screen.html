@@ -1,0 +1,6 @@
+<div class="title-screen">
+  <h1 class="title-screen-name">Dice Battler</h1>
+  <button type="button" class="title-screen-start" (click)="onStartClick()" [disabled]="starting()">
+    {{ starting() ? 'Ładowanie…' : 'Nowa gra' }}
+  </button>
+</div>
