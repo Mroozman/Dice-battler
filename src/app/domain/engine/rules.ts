@@ -41,3 +41,5 @@ export const RULES: GameRules = {
   revealEnemyDeckFromStage: 1,
   rewardAfterBoss: false,
 };
+
+export const REDUCED_TIMING: TimingRules = { rollMs: 1, impactMs: 1, drawMs: 1, enemyActMs: 1 };

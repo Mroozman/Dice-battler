@@ -1,5 +1,7 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { DieStage } from './die-stage';
+import { ReducedMotion } from '../../core/reduced-motion';
 import type { StagedRoll } from '../../domain/model/battle';
 import type { CombatantId } from '../../domain/model/combatant';
 import type { DieId } from '../../domain/model/die';
@@ -118,5 +120,38 @@ describe('DieStage', () => {
     fixture.destroy();
 
     expect(() => vi.advanceTimersByTime(5000)).not.toThrow();
+  });
+
+  it('skips the scramble entirely when the user prefers reduced motion', () => {
+    TestBed.configureTestingModule({
+      providers: [{ provide: ReducedMotion, useValue: { enabled: signal(true) } }],
+    });
+    vi.useFakeTimers();
+    const fixture = TestBed.createComponent(DieStage);
+    fixture.componentRef.setInput('staged', makeStaged({ value: null }));
+    fixture.detectChanges();
+
+    const value = fixture.nativeElement.querySelector('.die-stage-value') as HTMLElement;
+    expect(value.textContent?.trim()).toBe('D8');
+
+    vi.advanceTimersByTime(1000);
+    fixture.detectChanges();
+    expect(value.textContent?.trim()).toBe('D8');
+  });
+
+  it('skips the reveal pulse when the user prefers reduced motion', () => {
+    TestBed.configureTestingModule({
+      providers: [{ provide: ReducedMotion, useValue: { enabled: signal(true) } }],
+    });
+    vi.useFakeTimers();
+    const fixture = TestBed.createComponent(DieStage);
+    fixture.componentRef.setInput('staged', makeStaged({ value: null }));
+    fixture.detectChanges();
+
+    fixture.componentRef.setInput('staged', makeStaged({ value: 3 }));
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement.querySelector('.die-stage') as HTMLElement;
+    expect(el.classList.contains('die-stage--pulse')).toBe(false);
   });
 });

@@ -1,18 +1,22 @@
-import { Injectable, effect, inject } from '@angular/core';
+import { Injectable, computed, effect, inject } from '@angular/core';
 import type { Faker } from '@faker-js/faker';
 import { createRng, rollDie } from '../domain/engine/rng';
 import type { Rng } from '../domain/engine/rng';
+import { REDUCED_TIMING } from '../domain/engine/rules';
 import type { DieSides } from '../domain/model/die';
 import type { Combatant } from '../domain/model/combatant';
 import { createGameFaker } from '../domain/content/game-faker';
 import { rollReward } from '../domain/content/reward-factory';
 import { GameStore } from './game-store';
+import { ReducedMotion } from './reduced-motion';
 import { RULES } from './tokens';
 
 @Injectable({ providedIn: 'root' })
 export class TurnEngine {
   private readonly store = inject(GameStore);
   private readonly rules = inject(RULES);
+  private readonly reducedMotion = inject(ReducedMotion);
+  private readonly timing = computed(() => (this.reducedMotion.enabled() ? REDUCED_TIMING : this.rules.timing));
   private readonly rollRng: Rng = createRng(`${this.store.state().seed}-rolls`);
   private readonly runFaker: Promise<Faker> = createGameFaker(`${this.store.state().seed}-rewards`);
   private advancing = false;
@@ -67,7 +71,7 @@ export class TurnEngine {
     setTimeout(() => {
       this.store.dispatch({ type: 'roll/reveal', value });
       this.advancing = false;
-    }, this.rules.timing.rollMs);
+    }, this.timing().rollMs);
   }
 
   private scheduleApply(): void {
@@ -75,7 +79,7 @@ export class TurnEngine {
     setTimeout(() => {
       this.store.dispatch({ type: 'roll/apply' });
       this.advancing = false;
-    }, this.rules.timing.impactMs);
+    }, this.timing().impactMs);
   }
 
   private scheduleEndOfTurn(): void {
@@ -85,7 +89,7 @@ export class TurnEngine {
       this.store.dispatch({ type: 'turn/endPlayer' });
       this.nextEnemyIndex = 0;
       this.advancing = false;
-    }, this.rules.timing.drawMs);
+    }, this.timing().drawMs);
   }
 
   private scheduleEnemyStep(enemies: readonly Combatant[]): void {
@@ -99,7 +103,7 @@ export class TurnEngine {
       setTimeout(() => {
         this.store.dispatch({ type: 'turn/endRound' });
         this.advancing = false;
-      }, this.rules.timing.enemyActMs);
+      }, this.timing().enemyActMs);
       return;
     }
 
@@ -108,7 +112,7 @@ export class TurnEngine {
     setTimeout(() => {
       this.store.dispatch({ type: 'enemy/act', enemyId });
       this.advancing = false;
-    }, this.rules.timing.enemyActMs);
+    }, this.timing().enemyActMs);
   }
 
   private scheduleStageAdvance(): void {

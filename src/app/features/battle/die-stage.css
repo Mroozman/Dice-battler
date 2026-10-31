@@ -47,3 +47,13 @@
     transform: scale(1);
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .die-stage {
+    transition: none;
+  }
+
+  .die-stage--pulse {
+    animation: none;
+  }
+}

@@ -1,7 +1,10 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { GameStore } from './game-store';
 import { TurnEngine } from './turn-engine';
+import { ReducedMotion } from './reduced-motion';
 import { NEW_RUN_SEED } from './tokens';
+import { REDUCED_TIMING } from '../domain/engine/rules';
 
 const FIXED_RUN_SEED = 'fixed-run-seed-4';
 
@@ -227,5 +230,27 @@ describe('TurnEngine', () => {
     expect(store.run().pendingReward).toBeNull();
     expect(store.screen()).toBe('runOver');
     expect(store.run().outcome).toBe('victory');
+  });
+
+  it('reveals the roll after REDUCED_TIMING.rollMs, not the full rules.timing.rollMs, when reduced motion is on', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: NEW_RUN_SEED, useValue: () => FIXED_RUN_SEED },
+        { provide: ReducedMotion, useValue: { enabled: signal(true) } },
+      ],
+    });
+    const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
+    TestBed.inject(TurnEngine);
+    TestBed.tick();
+
+    selectFullHand(store);
+    store.dispatch({ type: 'player/confirm' });
+    TestBed.tick();
+
+    vi.advanceTimersByTime(REDUCED_TIMING.rollMs);
+    TestBed.tick();
+
+    expect(store.battle()!.staged?.value).not.toBeNull();
   });
 });

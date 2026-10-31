@@ -1,5 +1,6 @@
-import { Component, computed, effect, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import type { StagedRoll } from '../../domain/model/battle';
+import { ReducedMotion } from '../../core/reduced-motion';
 
 const SCRAMBLE_START_DELAY_MS = 60;
 const SCRAMBLE_MAX_DELAY_MS = 180;
@@ -18,6 +19,7 @@ function randomDieFace(sides: number): number {
 export class DieStage {
   readonly staged = input<StagedRoll | null>(null);
 
+  private readonly reducedMotion = inject(ReducedMotion);
   private readonly scrambleValue = signal<number | null>(null);
   private readonly pulsing = signal(false);
 
@@ -38,7 +40,7 @@ export class DieStage {
   constructor() {
     effect((onCleanup) => {
       const staged = this.staged();
-      if (!staged || staged.value !== null) {
+      if (!staged || staged.value !== null || this.reducedMotion.enabled()) {
         this.scrambleValue.set(null);
         return;
       }
@@ -59,7 +61,7 @@ export class DieStage {
 
     effect((onCleanup) => {
       const staged = this.staged();
-      if (!staged || staged.value === null) {
+      if (!staged || staged.value === null || this.reducedMotion.enabled()) {
         return;
       }
 
