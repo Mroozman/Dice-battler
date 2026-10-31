@@ -31,3 +31,19 @@
 .die-stage--rolling {
   opacity: 0.6;
 }
+
+.die-stage--pulse {
+  animation: die-stage-pulse 300ms ease-out;
+}
+
+@keyframes die-stage-pulse {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
