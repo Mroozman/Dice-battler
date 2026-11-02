@@ -11,6 +11,9 @@ const TARGETING_PHASES: ReadonlySet<BattlePhase> = new Set(['player.selecting', 
   imports: [CombatantCard, DieStage],
   templateUrl: './battlefield.html',
   styleUrl: './battlefield.css',
+  host: {
+    '(document:keydown)': 'onKeydown($event)',
+  },
 })
 export class Battlefield {
   readonly enemies = input<readonly Combatant[]>([]);
@@ -34,5 +37,21 @@ export class Battlefield {
 
   onEnemyPicked(enemyId: CombatantId): void {
     this.targetPicked.emit(enemyId);
+  }
+
+  onKeydown(event: KeyboardEvent): void {
+    if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) {
+      return;
+    }
+    const slot = Number(event.key);
+    if (!Number.isInteger(slot) || slot < 1 || slot > this.enemies().length) {
+      return;
+    }
+    const enemy = this.enemies()[slot - 1];
+    if (this.enemyState(enemy) !== 'targetable') {
+      return;
+    }
+    event.preventDefault();
+    this.onEnemyPicked(enemy.id);
   }
 }

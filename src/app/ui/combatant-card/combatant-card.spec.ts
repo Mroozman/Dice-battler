@@ -60,6 +60,18 @@ describe('CombatantCard', () => {
     expect(emitted).toBe(true);
   });
 
+  it('is a native, focusable button when targetable, so Tab/Space/Enter and :focus-within tooltip reveal work for free', () => {
+    const fixture = TestBed.createComponent(CombatantCard);
+    fixture.componentRef.setInput('combatant', makeCombatant());
+    fixture.componentRef.setInput('state', 'targetable');
+    fixture.detectChanges();
+
+    const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+    expect(button.tagName).toBe('BUTTON');
+    expect(button.type).toBe('button');
+    expect(button.tabIndex).toBe(0);
+  });
+
   it.each(['selected', 'hurt', 'dead', 'acting'] as const)('applies the %s state class', (state) => {
     const fixture = TestBed.createComponent(CombatantCard);
     fixture.componentRef.setInput('combatant', makeCombatant());

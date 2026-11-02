@@ -65,6 +65,18 @@ describe('Die', () => {
     expect(emitted).toBe(true);
   });
 
+  it('is a native, focusable button when interactive, so Tab/Space/Enter work without extra wiring', () => {
+    const fixture = TestBed.createComponent(Die);
+    fixture.componentRef.setInput('def', makeDef('attack'));
+    fixture.componentRef.setInput('interactive', true);
+    fixture.detectChanges();
+
+    const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+    expect(button.tagName).toBe('BUTTON');
+    expect(button.type).toBe('button');
+    expect(button.tabIndex).toBe(0);
+  });
+
   it('reflects selected and discard status as classes', () => {
     const fixture = TestBed.createComponent(Die);
     fixture.componentRef.setInput('def', makeDef('heal'));

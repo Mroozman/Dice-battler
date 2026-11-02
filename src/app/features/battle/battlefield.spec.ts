@@ -103,6 +103,86 @@ describe('Battlefield', () => {
     expect(cards[0].classList.contains('combatant-card--player')).toBe(true);
   });
 
+  it('picks a targetable enemy via its number key, numbered left to right', () => {
+    const fixture = TestBed.createComponent(Battlefield);
+    const enemy0 = makeCombatant('e0', 5);
+    const enemy1 = makeCombatant('e1', 5);
+    fixture.componentRef.setInput('enemies', [enemy0, enemy1]);
+    fixture.componentRef.setInput('player', makeCombatant('player', 20, 'player'));
+    fixture.componentRef.setInput('targetableIds', [enemy0.id, enemy1.id]);
+    fixture.componentRef.setInput('phase', 'player.selecting');
+    let picked: CombatantId | null = null;
+    fixture.componentInstance.targetPicked.subscribe((id) => (picked = id));
+    fixture.detectChanges();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '2' }));
+
+    expect(picked).toBe('e1');
+  });
+
+  it('ignores a number key for an enemy that is not targetable', () => {
+    const fixture = TestBed.createComponent(Battlefield);
+    const enemy = makeCombatant('e0', 5);
+    fixture.componentRef.setInput('enemies', [enemy]);
+    fixture.componentRef.setInput('player', makeCombatant('player', 20, 'player'));
+    fixture.componentRef.setInput('targetableIds', [enemy.id]);
+    fixture.componentRef.setInput('phase', 'enemy.acting');
+    let picked: CombatantId | null = null;
+    fixture.componentInstance.targetPicked.subscribe((id) => (picked = id));
+    fixture.detectChanges();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '1' }));
+
+    expect(picked).toBeNull();
+  });
+
+  it('ignores a number key with no matching enemy slot, without throwing', () => {
+    const fixture = TestBed.createComponent(Battlefield);
+    const enemy = makeCombatant('e0', 5);
+    fixture.componentRef.setInput('enemies', [enemy]);
+    fixture.componentRef.setInput('player', makeCombatant('player', 20, 'player'));
+    fixture.componentRef.setInput('targetableIds', [enemy.id]);
+    fixture.componentRef.setInput('phase', 'player.selecting');
+    let picked: CombatantId | null = null;
+    fixture.componentInstance.targetPicked.subscribe((id) => (picked = id));
+    fixture.detectChanges();
+
+    expect(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: '9' }))).not.toThrow();
+    expect(picked).toBeNull();
+  });
+
+  it('ignores a number key combined with a modifier, so browser/OS shortcuts stay intact', () => {
+    const fixture = TestBed.createComponent(Battlefield);
+    const enemy = makeCombatant('e0', 5);
+    fixture.componentRef.setInput('enemies', [enemy]);
+    fixture.componentRef.setInput('player', makeCombatant('player', 20, 'player'));
+    fixture.componentRef.setInput('targetableIds', [enemy.id]);
+    fixture.componentRef.setInput('phase', 'player.selecting');
+    let picked: CombatantId | null = null;
+    fixture.componentInstance.targetPicked.subscribe((id) => (picked = id));
+    fixture.detectChanges();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '1', ctrlKey: true }));
+
+    expect(picked).toBeNull();
+  });
+
+  it('ignores an auto-repeated keydown while a number key is held', () => {
+    const fixture = TestBed.createComponent(Battlefield);
+    const enemy = makeCombatant('e0', 5);
+    fixture.componentRef.setInput('enemies', [enemy]);
+    fixture.componentRef.setInput('player', makeCombatant('player', 20, 'player'));
+    fixture.componentRef.setInput('targetableIds', [enemy.id]);
+    fixture.componentRef.setInput('phase', 'player.selecting');
+    let pickedCount = 0;
+    fixture.componentInstance.targetPicked.subscribe(() => pickedCount++);
+    fixture.detectChanges();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '1', repeat: true }));
+
+    expect(pickedCount).toBe(0);
+  });
+
   it('only shows the enemy deck preview when deckPreviewEnabled is true', () => {
     const fixture = TestBed.createComponent(Battlefield);
     fixture.componentRef.setInput('enemies', [makeCombatant('e0', 5)]);

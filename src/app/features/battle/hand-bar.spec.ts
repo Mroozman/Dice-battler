@@ -79,4 +79,17 @@ describe('HandBar', () => {
 
     expect(confirmed).toBe(true);
   });
+
+  it('is a native, focusable button once confirmable, so Tab/Space/Enter work without extra wiring', () => {
+    const fixture = TestBed.createComponent(HandBar);
+    fixture.componentRef.setInput('hand', [makeDie('a')]);
+    fixture.componentRef.setInput('maxSelectable', 2);
+    fixture.componentRef.setInput('canConfirm', true);
+    fixture.detectChanges();
+
+    const confirmButton = fixture.nativeElement.querySelector('.hand-bar-confirm') as HTMLButtonElement;
+    expect(confirmButton.tagName).toBe('BUTTON');
+    expect(confirmButton.type).toBe('button');
+    expect(confirmButton.tabIndex).toBe(0);
+  });
 });

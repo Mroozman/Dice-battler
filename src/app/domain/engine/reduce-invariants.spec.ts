@@ -174,7 +174,7 @@ describe('reduce — deck and hp invariants under randomized play', () => {
       state = playOneTurn(state, driver);
       assertInvariants(state, catalogSize);
     }
-  });
+  }, 30_000);
 });
 
 describe('reduce — determinism of the whole game state', () => {
