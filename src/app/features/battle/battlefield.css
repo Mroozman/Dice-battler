@@ -24,3 +24,7 @@
   font-weight: 700;
   opacity: 0.7;
 }
+
+.enemy-row--boss {
+  margin: 0.75rem 0;
+}

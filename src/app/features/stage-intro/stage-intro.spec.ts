@@ -40,6 +40,20 @@ describe('StageIntro', () => {
     expect(fixture.nativeElement.querySelector('.stage-intro-heal').textContent).toContain('5');
   });
 
+  it.each([
+    [0, 'group', 'stage-shade--0'],
+    [1, 'group', 'stage-shade--1'],
+    [2, 'group', 'stage-shade--2'],
+    [3, 'boss', 'stage-shade--boss'],
+  ] as const)('darkens/retones the background per stage (index %i, kind %s)', (index, kind, expectedClass) => {
+    const fixture = TestBed.createComponent(StageIntro);
+    fixture.componentRef.setInput('stage', makeStage(index, kind));
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement.querySelector('.stage-intro') as HTMLElement;
+    expect(root.classList.contains(expectedClass)).toBe(true);
+  });
+
   it('emits continue when the button is clicked', () => {
     const fixture = TestBed.createComponent(StageIntro);
     fixture.componentRef.setInput('stage', makeStage(0));

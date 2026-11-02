@@ -40,6 +40,28 @@ describe('BattleScreen', () => {
     expect(root.querySelectorAll('.hand-bar .die').length).toBe(3);
   });
 
+  it('darkens the background per stage and shows boss styling only on the boss stage', async () => {
+    const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
+    const fixture = TestBed.createComponent(BattleScreen);
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.battle-screen')?.classList.contains('stage-shade--0')).toBe(true);
+    expect(root.querySelector('.combatant-card--boss')).toBeNull();
+
+    const bossIndex = store.run().stages.length - 1;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (store as any)._state.set({
+      ...store.state(),
+      run: { ...store.run(), stageIndex: bossIndex },
+    });
+    fixture.detectChanges();
+
+    expect(root.querySelector('.battle-screen')?.classList.contains('stage-shade--boss')).toBe(true);
+    expect(root.querySelector('.combatant-card--boss')).toBeTruthy();
+  });
+
   it('plays a full turn end to end through DOM clicks alone', async () => {
     const store = TestBed.inject(GameStore);
     await enterFirstBattle(store);

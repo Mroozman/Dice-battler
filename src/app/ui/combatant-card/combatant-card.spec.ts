@@ -92,6 +92,20 @@ describe('CombatantCard', () => {
     expect(button.classList.contains('combatant-card--enemy')).toBe(false);
   });
 
+  it('applies the boss class only when the boss input is set', () => {
+    const fixture = TestBed.createComponent(CombatantCard);
+    fixture.componentRef.setInput('combatant', makeCombatant());
+    fixture.detectChanges();
+
+    const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+    expect(button.classList.contains('combatant-card--boss')).toBe(false);
+
+    fixture.componentRef.setInput('boss', true);
+    fixture.detectChanges();
+
+    expect(button.classList.contains('combatant-card--boss')).toBe(true);
+  });
+
   it('does not render a deck preview by default', () => {
     const fixture = TestBed.createComponent(CombatantCard);
     fixture.componentRef.setInput('combatant', makeCombatant());

@@ -5,7 +5,6 @@
   justify-content: center;
   gap: 1rem;
   height: 100dvh;
-  background: var(--surface);
   color: var(--ink);
 }
 

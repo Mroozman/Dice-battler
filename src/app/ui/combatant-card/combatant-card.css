@@ -69,6 +69,19 @@
   filter: saturate(0.3);
 }
 
+.combatant-card--boss {
+  transform: scale(1.25);
+  min-width: 11rem;
+}
+
+.combatant-card--enemy.combatant-card--boss {
+  border-color: var(--boss);
+}
+
+.combatant-card--boss.combatant-card--targetable:hover {
+  border-color: var(--boss);
+}
+
 .combatant-name {
   font-weight: 600;
 }

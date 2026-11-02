@@ -1,4 +1,4 @@
-<div class="stage-intro">
+<div [class]="'stage-intro ' + shadeClass()">
   <h1 class="stage-intro-title">{{ title() }}</h1>
   @if (healedBy() > 0) {
     <p class="stage-intro-heal">Odzyskujesz {{ healedBy() }} HP</p>

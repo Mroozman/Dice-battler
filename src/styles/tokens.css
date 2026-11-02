@@ -12,3 +12,19 @@
 
   --gap: 0.75rem;
 }
+
+.stage-shade--0 {
+  background: var(--surface);
+}
+
+.stage-shade--1 {
+  background: color-mix(in srgb, var(--surface) 90%, black);
+}
+
+.stage-shade--2 {
+  background: color-mix(in srgb, var(--surface) 78%, black);
+}
+
+.stage-shade--boss {
+  background: color-mix(in srgb, var(--boss) 25%, var(--surface));
+}

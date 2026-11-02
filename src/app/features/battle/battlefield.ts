@@ -22,6 +22,7 @@ export class Battlefield {
   readonly phase = input<BattlePhase>('player.selecting');
   readonly staged = input<StagedRoll | null>(null);
   readonly deckPreviewEnabled = input(false);
+  readonly isBoss = input(false);
 
   readonly targetPicked = output<CombatantId>();
 

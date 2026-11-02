@@ -1,12 +1,15 @@
 <div class="battlefield">
-  <div class="enemy-row">
+  <div class="enemy-row" [class.enemy-row--boss]="isBoss()">
     @for (enemy of enemies(); track enemy.id; let i = $index) {
       <div class="enemy-slot">
-        <span class="enemy-number">{{ i + 1 }}</span>
+        @if (!isBoss()) {
+          <span class="enemy-number">{{ i + 1 }}</span>
+        }
         <app-combatant-card
           [combatant]="enemy"
           [state]="enemyState(enemy)"
           [showDeckPreview]="deckPreviewEnabled()"
+          [boss]="isBoss()"
           (picked)="onEnemyPicked(enemy.id)"
         />
       </div>

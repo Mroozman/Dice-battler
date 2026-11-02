@@ -197,4 +197,31 @@ describe('Battlefield', () => {
 
     expect(fixture.nativeElement.querySelector('app-deck-preview')).toBeTruthy();
   });
+
+  it('hides the enemy number badge and marks the card as boss during a boss encounter', () => {
+    const fixture = TestBed.createComponent(Battlefield);
+    const enemy = makeCombatant('boss', 30);
+    fixture.componentRef.setInput('enemies', [enemy]);
+    fixture.componentRef.setInput('player', makeCombatant('player', 20, 'player'));
+    fixture.componentRef.setInput('isBoss', true);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.enemy-number')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.enemy-row')?.classList.contains('enemy-row--boss')).toBe(true);
+    const card = fixture.nativeElement.querySelector('.combatant-card--enemy') as HTMLElement;
+    expect(card.classList.contains('combatant-card--boss')).toBe(true);
+  });
+
+  it('shows the enemy number badge and no boss styling outside a boss encounter', () => {
+    const fixture = TestBed.createComponent(Battlefield);
+    const enemy = makeCombatant('e0', 5);
+    fixture.componentRef.setInput('enemies', [enemy]);
+    fixture.componentRef.setInput('player', makeCombatant('player', 20, 'player'));
+    fixture.componentRef.setInput('isBoss', false);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.enemy-number')).toBeTruthy();
+    const card = fixture.nativeElement.querySelector('.combatant-card--enemy') as HTMLElement;
+    expect(card.classList.contains('combatant-card--boss')).toBe(false);
+  });
 });

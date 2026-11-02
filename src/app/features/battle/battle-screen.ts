@@ -3,6 +3,7 @@ import { GameStore } from '../../core/game-store';
 import { TurnEngine } from '../../core/turn-engine';
 import type { CombatantId } from '../../domain/model/combatant';
 import type { DieId } from '../../domain/model/die';
+import { stageShadeClass } from '../../ui/stage-shade';
 import { DeckPanel } from './deck-panel';
 import { Battlefield } from './battlefield';
 import { HandBar } from './hand-bar';
@@ -20,6 +21,18 @@ export class BattleScreen {
 
   private readonly _logOpen = signal(false);
   protected readonly logOpen = this._logOpen.asReadonly();
+
+  protected readonly currentStage = computed(() => {
+    const run = this.store.run();
+    return run.stages[run.stageIndex];
+  });
+
+  protected readonly shadeClass = computed(() => {
+    const stage = this.currentStage();
+    return stage ? stageShadeClass(stage.index, stage.kind) : 'stage-shade--0';
+  });
+
+  protected readonly isBoss = computed(() => this.currentStage()?.kind === 'boss');
 
   protected readonly outcomeTitle = computed(() => {
     switch (this.store.battleOutcome()) {

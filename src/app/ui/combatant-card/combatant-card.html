@@ -8,6 +8,7 @@
   [class.combatant-card--hurt]="state() === 'hurt'"
   [class.combatant-card--dead]="state() === 'dead'"
   [class.combatant-card--acting]="state() === 'acting'"
+  [class.combatant-card--boss]="boss()"
   [disabled]="state() !== 'targetable'"
   (click)="onClick()"
 >

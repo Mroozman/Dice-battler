@@ -7,7 +7,7 @@
     <h1>{{ outcomeTitle() }}</h1>
   </div>
 } @else if (store.battle(); as battle) {
-  <div class="battle-screen">
+  <div [class]="'battle-screen ' + shadeClass()">
     <button
       type="button"
       class="log-toggle"
@@ -31,6 +31,7 @@
         [phase]="battle.phase"
         [staged]="battle.staged"
         [deckPreviewEnabled]="store.enemyDeckVisible()"
+        [isBoss]="isBoss()"
         (targetPicked)="onTargetPicked($event)"
       />
     </section>
