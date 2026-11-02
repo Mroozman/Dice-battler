@@ -7,6 +7,7 @@
         [class.deck-preview-item--heal]="entry.def.kind === 'heal'"
         [class.deck-preview-item--shield]="entry.def.kind === 'shield'"
       >
+        <span class="deck-preview-icon" aria-hidden="true">{{ icon[entry.def.kind] }}</span>
         {{ entry.def.label }}
       </li>
     }

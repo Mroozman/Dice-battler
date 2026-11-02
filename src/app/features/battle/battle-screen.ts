@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { GameStore } from '../../core/game-store';
 import { TurnEngine } from '../../core/turn-engine';
 import type { CombatantId } from '../../domain/model/combatant';
@@ -17,6 +17,9 @@ import { BattleLog } from './battle-log';
 export class BattleScreen {
   private readonly turnEngine = inject(TurnEngine);
   protected readonly store = inject(GameStore);
+
+  private readonly _logOpen = signal(false);
+  protected readonly logOpen = this._logOpen.asReadonly();
 
   protected readonly outcomeTitle = computed(() => {
     switch (this.store.battleOutcome()) {
@@ -53,5 +56,9 @@ export class BattleScreen {
 
   onConfirmed(): void {
     this.store.dispatch({ type: 'player/confirm' });
+  }
+
+  toggleLog(): void {
+    this._logOpen.update((open) => !open);
   }
 }

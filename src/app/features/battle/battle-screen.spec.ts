@@ -96,6 +96,32 @@ describe('BattleScreen', () => {
     expect(fixture.nativeElement.querySelectorAll('.battle-log-entry').length).toBe(store.log().length);
   });
 
+  it('toggles the log drawer open/closed via the log-toggle button, for the narrow layout', async () => {
+    const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
+    const fixture = TestBed.createComponent(BattleScreen);
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const toggle = root.querySelector('.log-toggle') as HTMLButtonElement;
+    const logPanel = root.querySelector('#battle-log-panel') as HTMLElement;
+    expect(toggle.getAttribute('aria-controls')).toBe('battle-log-panel');
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(logPanel.classList.contains('zone--open')).toBe(false);
+
+    toggle.click();
+    fixture.detectChanges();
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(logPanel.classList.contains('zone--open')).toBe(true);
+
+    toggle.click();
+    fixture.detectChanges();
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(logPanel.classList.contains('zone--open')).toBe(false);
+  });
+
   it('shows a victory/defeat placeholder instead of the board once the battle ends', async () => {
     const store = TestBed.inject(GameStore);
     await enterFirstBattle(store);

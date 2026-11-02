@@ -54,3 +54,66 @@
 .battle-outcome--defeat h1 {
   color: var(--enemy);
 }
+
+.log-toggle {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .battle-screen {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'deck'
+      'board'
+      'hand';
+  }
+
+  .zone.deck {
+    display: flex;
+    flex-direction: column;
+    max-height: 7rem;
+  }
+
+  .zone.deck .deck-panel {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .log-toggle {
+    display: block;
+    position: fixed;
+    top: var(--gap);
+    right: var(--gap);
+    z-index: 30;
+    padding: 0.4rem 0.8rem;
+    border-radius: 0.4rem;
+    border: none;
+    background: var(--surface-2);
+    color: var(--ink);
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .zone.log {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(85vw, 320px);
+    border-radius: 0;
+    transform: translateX(100%);
+    transition: transform 0.2s ease-out;
+    z-index: 20;
+  }
+
+  .zone.log.zone--open {
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 1024px) and (prefers-reduced-motion: reduce) {
+  .zone.log {
+    transition: none;
+  }
+}

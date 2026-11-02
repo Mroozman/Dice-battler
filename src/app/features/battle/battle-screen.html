@@ -8,6 +8,16 @@
   </div>
 } @else if (store.battle(); as battle) {
   <div class="battle-screen">
+    <button
+      type="button"
+      class="log-toggle"
+      [attr.aria-expanded]="logOpen()"
+      aria-controls="battle-log-panel"
+      (click)="toggleLog()"
+    >
+      Log walki
+    </button>
+
     <aside class="zone deck" style="grid-area: deck">
       <h2 class="zone-title">Talia</h2>
       <app-deck-panel [entries]="store.deckView()" />
@@ -25,7 +35,7 @@
       />
     </section>
 
-    <aside class="zone log" style="grid-area: log">
+    <aside id="battle-log-panel" class="zone log" style="grid-area: log" [class.zone--open]="logOpen()">
       <h2 class="zone-title">Log walki</h2>
       <app-battle-log [entries]="store.log()" />
     </aside>

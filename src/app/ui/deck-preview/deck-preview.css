@@ -35,3 +35,7 @@
 .deck-preview-item--shield {
   background: color-mix(in srgb, var(--die-shield) 35%, var(--surface-2));
 }
+
+.deck-preview-icon {
+  margin-right: 0.15rem;
+}

@@ -112,6 +112,6 @@ describe('CombatantCard', () => {
 
     const preview = fixture.nativeElement.querySelector('app-deck-preview');
     expect(preview).toBeTruthy();
-    expect(preview.textContent.trim()).toBe('D6');
+    expect(preview.textContent.trim()).toContain('D6');
   });
 });

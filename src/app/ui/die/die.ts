@@ -1,12 +1,7 @@
 import { Component, computed, input, output } from '@angular/core';
-import type { DieDef, DieKind } from '../../domain/model/die';
+import type { DieDef } from '../../domain/model/die';
 import type { DieStatus } from '../../domain/engine/deck';
-
-const KIND_ICON: Record<DieKind, string> = {
-  attack: '⚔',
-  heal: '✚',
-  shield: '🛡',
-};
+import { DIE_KIND_ICON } from '../die-kind-icon';
 
 @Component({
   selector: 'app-die',
@@ -21,7 +16,7 @@ export class Die {
 
   readonly activated = output<void>();
 
-  readonly icon = computed(() => KIND_ICON[this.def().kind]);
+  readonly icon = computed(() => DIE_KIND_ICON[this.def().kind]);
 
   onClick(): void {
     if (this.interactive()) {

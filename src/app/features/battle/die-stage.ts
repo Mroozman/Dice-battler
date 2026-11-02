@@ -1,6 +1,7 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import type { StagedRoll } from '../../domain/model/battle';
 import { ReducedMotion } from '../../core/reduced-motion';
+import { DIE_KIND_ICON } from '../../ui/die-kind-icon';
 
 const SCRAMBLE_START_DELAY_MS = 60;
 const SCRAMBLE_MAX_DELAY_MS = 180;
@@ -35,6 +36,11 @@ export class DieStage {
     }
     const scramble = this.scrambleValue();
     return scramble === null ? `D${staged.sides}` : String(scramble);
+  });
+
+  readonly icon = computed(() => {
+    const staged = this.staged();
+    return staged ? DIE_KIND_ICON[staged.kind] : '';
   });
 
   constructor() {

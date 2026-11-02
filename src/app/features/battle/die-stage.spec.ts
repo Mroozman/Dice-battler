@@ -2,6 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { DieStage } from './die-stage';
 import { ReducedMotion } from '../../core/reduced-motion';
+import { DIE_KIND_ICON } from '../../ui/die-kind-icon';
 import type { StagedRoll } from '../../domain/model/battle';
 import type { CombatantId } from '../../domain/model/combatant';
 import type { DieId } from '../../domain/model/die';
@@ -33,6 +34,16 @@ describe('DieStage', () => {
 
     const value = fixture.nativeElement.querySelector('.die-stage-value') as HTMLElement;
     expect(value.textContent?.trim()).toBe('—');
+    expect(fixture.nativeElement.querySelector('.die-stage-icon')).toBeNull();
+  });
+
+  it('shows the kind icon alongside the value, so color is never the only signal', () => {
+    const fixture = TestBed.createComponent(DieStage);
+    fixture.componentRef.setInput('staged', makeStaged({ kind: 'shield', value: 5 }));
+    fixture.detectChanges();
+
+    const icon = fixture.nativeElement.querySelector('.die-stage-icon') as HTMLElement;
+    expect(icon.textContent?.trim()).toBe(DIE_KIND_ICON['shield']);
   });
 
   it('immediately scrambles to a random face within the die range while rolling', () => {
