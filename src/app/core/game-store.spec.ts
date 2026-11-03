@@ -154,6 +154,22 @@ describe('GameStore', () => {
       expect(next.phase).toBe('player.rolling');
     });
 
+    it('exposes the picked enemies as targets, only enemies and without duplicates', async () => {
+      const store = TestBed.inject(GameStore);
+      const { attacks, support, enemyIds } = await enterTwoEnemyBattleWithTwoAttackDice(store);
+
+      expect(store.pickedTargetIds()).toEqual([]);
+
+      store.selectDie(support.id);
+      expect(store.pickedTargetIds()).toEqual([]);
+
+      store.selectDie(attacks[0].id);
+      store.selectDie(attacks[1].id);
+      store.pickTarget(enemyIds[1]);
+
+      expect(store.pickedTargetIds()).toEqual([enemyIds[1]]);
+    });
+
     it('does not target the support die and ignores a pick when no attack die is selected', async () => {
       const store = TestBed.inject(GameStore);
       const { support, enemyIds } = await enterTwoEnemyBattleWithTwoAttackDice(store);

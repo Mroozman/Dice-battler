@@ -80,6 +80,11 @@ function requireBattle(state: GameState): BattleState {
   return state.battle;
 }
 
+function soleTarget(battle: BattleState): CombatantId | null {
+  const targets = targetableFor(battle);
+  return targets.length === 1 ? targets[0] : null;
+}
+
 function withBattle(state: GameState, battle: BattleState): GameState {
   return { ...state, battle };
 }
@@ -147,7 +152,7 @@ function reduceToggleDie(state: GameState, dieId: DieId, rules: ReduceRules): Re
       return noEffects(state);
     }
     const def = findDieDef(battle, battle.player.id, dieId);
-    const targetId = needsTarget(def.kind) ? null : battle.player.id;
+    const targetId = needsTarget(def.kind) ? soleTarget(battle) : battle.player.id;
     selection = [...battle.selection, { dieId, targetId }];
   }
 
@@ -311,6 +316,17 @@ function reduceRollApply(state: GameState, rules: ReduceRules): Reduction {
         if (targetableFor(next).length === 0) {
           remaining = remaining.slice(1);
           continue;
+        }
+        const onlyTarget = soleTarget(next);
+        if (onlyTarget) {
+          remaining = [{ ...head, targetId: onlyTarget }, ...remaining.slice(1)];
+          next = {
+            ...next,
+            resolveQueue: remaining,
+            phase: 'player.rolling',
+            staged: buildStagedRoll(remaining[0], ownerId, next),
+          };
+          return { state: appendLog(withBattle(state, next), ...pendingEntries), effects };
         }
         remaining = [{ ...head, targetId: null }, ...remaining.slice(1)];
         next = {

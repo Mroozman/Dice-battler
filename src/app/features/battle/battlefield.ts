@@ -20,6 +20,7 @@ export class Battlefield {
   readonly player = input.required<Combatant>();
   readonly targetableIds = input<readonly CombatantId[]>([]);
   readonly canPickTarget = input(false);
+  readonly pickedTargetIds = input<readonly CombatantId[]>([]);
   readonly phase = input<BattlePhase>('player.selecting');
   readonly staged = input<StagedRoll | null>(null);
   readonly deckPreviewEnabled = input(false);

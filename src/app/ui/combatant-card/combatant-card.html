@@ -9,9 +9,14 @@
   [class.combatant-card--dead]="state() === 'dead'"
   [class.combatant-card--acting]="state() === 'acting'"
   [class.combatant-card--boss]="boss()"
+  [class.combatant-card--targeted]="targeted()"
+  [attr.aria-pressed]="combatant().kind === 'enemy' ? targeted() : null"
   [disabled]="state() !== 'targetable'"
   (click)="onClick()"
 >
+  @if (targeted()) {
+    <span class="combatant-target-badge">🎯 Cel</span>
+  }
   <span class="combatant-name">{{ combatant().name }}</span>
   <app-health-bar
     [style.--hp-fill-color]="combatant().kind === 'player' ? 'var(--player)' : 'var(--enemy)'"

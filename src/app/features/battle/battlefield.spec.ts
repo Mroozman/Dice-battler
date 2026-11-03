@@ -220,6 +220,22 @@ describe('Battlefield', () => {
     expect(fixture.nativeElement.querySelector('app-deck-preview')).toBeTruthy();
   });
 
+  it('highlights only the living enemies that are currently picked as targets', () => {
+    const fixture = TestBed.createComponent(Battlefield);
+    const enemies = [makeCombatant('e0', 5), makeCombatant('e1', 5), makeCombatant('e2', 0)];
+    fixture.componentRef.setInput('enemies', enemies);
+    fixture.componentRef.setInput('player', makeCombatant('player', 20, 'player'));
+    fixture.componentRef.setInput('pickedTargetIds', ['e1', 'e2']);
+    fixture.detectChanges();
+
+    const cards = fixture.nativeElement.querySelectorAll('.combatant-card--enemy') as NodeListOf<HTMLElement>;
+    expect(Array.from(cards).map((card) => card.classList.contains('combatant-card--targeted'))).toEqual([
+      false,
+      true,
+      false,
+    ]);
+  });
+
   it('hides the enemy number badge and marks the card as boss during a boss encounter', () => {
     const fixture = TestBed.createComponent(Battlefield);
     const enemy = makeCombatant('boss', 30);

@@ -79,6 +79,18 @@ export class GameStore {
     targetableFor(this._state().battle),
   );
 
+  readonly pickedTargetIds = computed<readonly CombatantId[]>(() => {
+    const battle = this._state().battle;
+    if (!battle) {
+      return [];
+    }
+    const enemyIds = new Set(battle.enemies.map((enemy) => enemy.id));
+    const ids = [...battle.selection, ...battle.resolveQueue]
+      .map((sel) => sel.targetId)
+      .filter((id): id is CombatantId => id !== null && enemyIds.has(id));
+    return [...new Set(ids)];
+  });
+
   readonly canPickTarget = computed(() => {
     const battle = this._state().battle;
     if (!battle) {

@@ -17,6 +17,7 @@ export class CombatantCard {
   readonly state = input<CombatantCardState>('idle');
   readonly showDeckPreview = input(false);
   readonly boss = input(false);
+  readonly targeted = input(false);
 
   readonly picked = output<void>();
 

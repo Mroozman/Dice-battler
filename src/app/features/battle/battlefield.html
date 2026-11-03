@@ -10,6 +10,7 @@
           [state]="enemyState(enemy)"
           [showDeckPreview]="deckPreviewEnabled()"
           [boss]="isBoss()"
+          [targeted]="enemy.hp > 0 && pickedTargetIds().includes(enemy.id)"
           (picked)="onEnemyPicked(enemy.id)"
         />
       </div>

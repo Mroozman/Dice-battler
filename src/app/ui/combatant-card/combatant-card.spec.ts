@@ -92,6 +92,31 @@ describe('CombatantCard', () => {
     expect(button.classList.contains('combatant-card--enemy')).toBe(false);
   });
 
+  it('marks the card as the picked target with a badge, not color alone, and exposes aria-pressed', () => {
+    const fixture = TestBed.createComponent(CombatantCard);
+    fixture.componentRef.setInput('combatant', makeCombatant());
+    fixture.detectChanges();
+
+    const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+    expect(button.querySelector('.combatant-target-badge')).toBeNull();
+    expect(button.getAttribute('aria-pressed')).toBe('false');
+
+    fixture.componentRef.setInput('targeted', true);
+    fixture.detectChanges();
+
+    expect(button.classList.contains('combatant-card--targeted')).toBe(true);
+    expect(button.querySelector('.combatant-target-badge')?.textContent).toContain('Cel');
+    expect(button.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('does not expose aria-pressed on the player card', () => {
+    const fixture = TestBed.createComponent(CombatantCard);
+    fixture.componentRef.setInput('combatant', makeCombatant({ kind: 'player' }));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('button').hasAttribute('aria-pressed')).toBe(false);
+  });
+
   it('applies the boss class only when the boss input is set', () => {
     const fixture = TestBed.createComponent(CombatantCard);
     fixture.componentRef.setInput('combatant', makeCombatant());

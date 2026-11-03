@@ -130,10 +130,10 @@ function makeState(battle: BattleState, overrides: Partial<GameState> = {}): Gam
 }
 
 describe('player/toggleDie', () => {
-  it('selects an attack die from hand with no target yet', () => {
+  it('selects an attack die from hand with no target yet when several enemies are alive', () => {
     const atk = makeDie('atk', 'attack');
     const deck = makeDeck([atk], 1);
-    const state = makeState(makeBattle(makePlayer(deck), [makeEnemy('e0', 5)]));
+    const state = makeState(makeBattle(makePlayer(deck), [makeEnemy('e0', 5), makeEnemy('e1', 5)]));
 
     const { state: next } = reduce(state, { type: 'player/toggleDie', dieId: atk.id }, RULES);
 
@@ -432,8 +432,7 @@ describe('roll/apply', () => {
     const [atk1, atk2] = [makeDie('atk1', 'attack'), makeDie('atk2', 'attack')];
     const deck = makeDeck([atk1, atk2], 2);
     const victim = makeEnemy('e0', 3);
-    const survivor = makeEnemy('e1', 5);
-    const battle = makeBattle(makePlayer(deck), [victim, survivor], {
+    const battle = makeBattle(makePlayer(deck), [victim, makeEnemy('e1', 5), makeEnemy('e2', 5)], {
       phase: 'player.resolving',
       resolveQueue: [
         { dieId: atk1.id, targetId: victim.id },
@@ -448,6 +447,29 @@ describe('roll/apply', () => {
 
     expect(battleAfter.phase).toBe('player.retargeting');
     expect(battleAfter.resolveQueue).toEqual([{ dieId: atk2.id, targetId: null }]);
+    expect(battleAfter.staged).toEqual({ dieId: atk2.id, sides: 6, kind: 'attack', ownerId: 'player', value: null });
+  });
+
+  it('retargets automatically to the only survivor instead of entering player.retargeting', () => {
+    const [atk1, atk2] = [makeDie('atk1', 'attack'), makeDie('atk2', 'attack')];
+    const deck = makeDeck([atk1, atk2], 2);
+    const victim = makeEnemy('e0', 3);
+    const survivor = makeEnemy('e1', 5);
+    const battle = makeBattle(makePlayer(deck), [victim, survivor], {
+      phase: 'player.resolving',
+      resolveQueue: [
+        { dieId: atk1.id, targetId: victim.id },
+        { dieId: atk2.id, targetId: victim.id },
+      ],
+      staged: { dieId: atk1.id, sides: 6, kind: 'attack', ownerId: 'player' as CombatantId, value: 5 },
+    });
+    const state = makeState(battle);
+
+    const { state: next } = reduce(state, { type: 'roll/apply' }, RULES);
+    const battleAfter = next.battle!;
+
+    expect(battleAfter.phase).toBe('player.rolling');
+    expect(battleAfter.resolveQueue).toEqual([{ dieId: atk2.id, targetId: survivor.id }]);
     expect(battleAfter.staged).toEqual({ dieId: atk2.id, sides: 6, kind: 'attack', ownerId: 'player', value: null });
   });
 
