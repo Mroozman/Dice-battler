@@ -59,6 +59,112 @@ describe('GameStore', () => {
     expect(store.deckView().every((entry) => entry.status === 'pool' || entry.status === 'hand')).toBe(true);
   });
 
+  describe('shared target for the attack dice', () => {
+    async function enterTwoEnemyBattleWithTwoAttackDice(store: GameStore) {
+      await enterFirstBattle(store);
+      const battle = store.state().battle!;
+      const dice = Object.values(battle.player.deck.catalog);
+      const attacks = dice.filter((def) => def.kind === 'attack').slice(0, 2);
+      const support = dice.find((def) => def.kind !== 'attack')!;
+      const hand = [...attacks, support].map((def) => def.id);
+      const enemy = battle.enemies[0];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (store as any)._state.set({
+        ...store.state(),
+        battle: {
+          ...battle,
+          player: { ...battle.player, deck: { ...battle.player.deck, hand } },
+          enemies: [enemy, { ...enemy, id: 'e-extra' }],
+        },
+      });
+      return { attacks, support, enemyIds: store.enemies().map((e) => e.id) };
+    }
+
+    it('cannot pick a target until an attack die is selected', async () => {
+      const store = TestBed.inject(GameStore);
+      const { attacks, support } = await enterTwoEnemyBattleWithTwoAttackDice(store);
+
+      expect(store.canPickTarget()).toBe(false);
+
+      store.selectDie(support.id);
+      expect(store.canPickTarget()).toBe(false);
+
+      store.selectDie(attacks[0].id);
+      expect(store.canPickTarget()).toBe(true);
+    });
+
+    it('applies one picked target to every selected attack die', async () => {
+      const store = TestBed.inject(GameStore);
+      const { attacks, enemyIds } = await enterTwoEnemyBattleWithTwoAttackDice(store);
+
+      store.selectDie(attacks[0].id);
+      store.selectDie(attacks[1].id);
+      store.pickTarget(enemyIds[1]);
+
+      expect(store.state().battle!.selection.map((sel) => sel.targetId)).toEqual([enemyIds[1], enemyIds[1]]);
+      expect(store.canConfirm()).toBe(true);
+    });
+
+    it('lets the player change the shared target before confirming', async () => {
+      const store = TestBed.inject(GameStore);
+      const { attacks, enemyIds } = await enterTwoEnemyBattleWithTwoAttackDice(store);
+
+      store.selectDie(attacks[0].id);
+      store.selectDie(attacks[1].id);
+      store.pickTarget(enemyIds[0]);
+      store.pickTarget(enemyIds[1]);
+
+      expect(store.state().battle!.selection.map((sel) => sel.targetId)).toEqual([enemyIds[1], enemyIds[1]]);
+    });
+
+    it('gives an attack die selected later the target already chosen for the earlier one', async () => {
+      const store = TestBed.inject(GameStore);
+      const { attacks, enemyIds } = await enterTwoEnemyBattleWithTwoAttackDice(store);
+
+      store.selectDie(attacks[0].id);
+      store.pickTarget(enemyIds[1]);
+      store.selectDie(attacks[1].id);
+
+      expect(store.state().battle!.selection.map((sel) => sel.targetId)).toEqual([enemyIds[1], enemyIds[1]]);
+    });
+
+    it('retargets every remaining attack die at once when the shared target dies mid-resolution', async () => {
+      const store = TestBed.inject(GameStore);
+      const { attacks, enemyIds } = await enterTwoEnemyBattleWithTwoAttackDice(store);
+      const battle = store.state().battle!;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (store as any)._state.set({
+        ...store.state(),
+        battle: {
+          ...battle,
+          phase: 'player.retargeting',
+          enemies: [{ ...battle.enemies[0], hp: 0 }, battle.enemies[1]],
+          resolveQueue: [
+            { dieId: attacks[0].id, targetId: null },
+            { dieId: attacks[1].id, targetId: enemyIds[0] },
+          ],
+          staged: null,
+        },
+      });
+
+      store.pickTarget(enemyIds[1]);
+
+      const next = store.state().battle!;
+      expect(next.resolveQueue.map((sel) => sel.targetId)).toEqual([enemyIds[1], enemyIds[1]]);
+      expect(next.phase).toBe('player.rolling');
+    });
+
+    it('does not target the support die and ignores a pick when no attack die is selected', async () => {
+      const store = TestBed.inject(GameStore);
+      const { support, enemyIds } = await enterTwoEnemyBattleWithTwoAttackDice(store);
+
+      store.selectDie(support.id);
+      store.pickTarget(enemyIds[0]);
+
+      expect(store.state().battle!.selection[0].targetId).toBe('player');
+    });
+  });
+
   it('becomes confirmable once dicePerTurn dice are selected and targeted', async () => {
     const store = TestBed.inject(GameStore);
     await enterFirstBattle(store);

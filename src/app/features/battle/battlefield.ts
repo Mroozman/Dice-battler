@@ -19,6 +19,7 @@ export class Battlefield {
   readonly enemies = input<readonly Combatant[]>([]);
   readonly player = input.required<Combatant>();
   readonly targetableIds = input<readonly CombatantId[]>([]);
+  readonly canPickTarget = input(false);
   readonly phase = input<BattlePhase>('player.selecting');
   readonly staged = input<StagedRoll | null>(null);
   readonly deckPreviewEnabled = input(false);
@@ -30,7 +31,7 @@ export class Battlefield {
     if (enemy.hp <= 0) {
       return 'dead';
     }
-    if (TARGETING_PHASES.has(this.phase()) && this.targetableIds().includes(enemy.id)) {
+    if (this.canPickTarget() && TARGETING_PHASES.has(this.phase()) && this.targetableIds().includes(enemy.id)) {
       return 'targetable';
     }
     return 'idle';

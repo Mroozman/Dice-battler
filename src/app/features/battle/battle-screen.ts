@@ -45,26 +45,12 @@ export class BattleScreen {
     }
   });
 
-  private awaitingTargetDieId(): DieId | null {
-    const battle = this.store.battle();
-    if (!battle) {
-      return null;
-    }
-    if (battle.phase === 'player.retargeting') {
-      return battle.resolveQueue[0]?.dieId ?? null;
-    }
-    return battle.selection.find((sel) => sel.targetId === null)?.dieId ?? null;
-  }
-
   onDieToggled(dieId: DieId): void {
-    this.store.dispatch({ type: 'player/toggleDie', dieId });
+    this.store.selectDie(dieId);
   }
 
   onTargetPicked(targetId: CombatantId): void {
-    const dieId = this.awaitingTargetDieId();
-    if (dieId) {
-      this.store.dispatch({ type: 'player/setTarget', dieId, targetId });
-    }
+    this.store.pickTarget(targetId);
   }
 
   onConfirmed(): void {

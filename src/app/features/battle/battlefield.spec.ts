@@ -40,6 +40,7 @@ describe('Battlefield', () => {
     fixture.componentRef.setInput('player', makeCombatant('player', 20, 'player'));
     fixture.componentRef.setInput('targetableIds', [enemy.id]);
     fixture.componentRef.setInput('phase', 'player.selecting');
+    fixture.componentRef.setInput('canPickTarget', true);
     let picked: CombatantId | null = null;
     fixture.componentInstance.targetPicked.subscribe((id) => (picked = id));
     fixture.detectChanges();
@@ -50,6 +51,26 @@ describe('Battlefield', () => {
     cards[0].click();
 
     expect(picked).toBe('e0');
+  });
+
+  it('does not make a living enemy clickable while no die is awaiting a target', () => {
+    const fixture = TestBed.createComponent(Battlefield);
+    const enemy = makeCombatant('e0', 5);
+    fixture.componentRef.setInput('enemies', [enemy]);
+    fixture.componentRef.setInput('player', makeCombatant('player', 20, 'player'));
+    fixture.componentRef.setInput('targetableIds', [enemy.id]);
+    fixture.componentRef.setInput('phase', 'player.selecting');
+    fixture.componentRef.setInput('canPickTarget', false);
+    let picked: CombatantId | null = null;
+    fixture.componentInstance.targetPicked.subscribe((id) => (picked = id));
+    fixture.detectChanges();
+
+    const cards = fixture.nativeElement.querySelectorAll('.combatant-card') as NodeListOf<HTMLButtonElement>;
+    expect(cards[0].classList.contains('combatant-card--targetable')).toBe(false);
+    expect(cards[0].disabled).toBe(true);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '1' }));
+
+    expect(picked).toBeNull();
   });
 
   it('does not treat a living enemy as targetable outside a targeting phase', () => {
@@ -111,6 +132,7 @@ describe('Battlefield', () => {
     fixture.componentRef.setInput('player', makeCombatant('player', 20, 'player'));
     fixture.componentRef.setInput('targetableIds', [enemy0.id, enemy1.id]);
     fixture.componentRef.setInput('phase', 'player.selecting');
+    fixture.componentRef.setInput('canPickTarget', true);
     let picked: CombatantId | null = null;
     fixture.componentInstance.targetPicked.subscribe((id) => (picked = id));
     fixture.detectChanges();

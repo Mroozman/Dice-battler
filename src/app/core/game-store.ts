@@ -79,6 +79,17 @@ export class GameStore {
     targetableFor(this._state().battle),
   );
 
+  readonly canPickTarget = computed(() => {
+    const battle = this._state().battle;
+    if (!battle) {
+      return false;
+    }
+    if (battle.phase === 'player.retargeting') {
+      return true;
+    }
+    return battle.phase === 'player.selecting' && battle.selection.some((sel) => this.isAttackDie(sel.dieId));
+  });
+
   readonly enemyDeckVisible = computed(
     () => this._state().run.stageIndex >= this.rules.revealEnemyDeckFromStage,
   );
@@ -103,5 +114,41 @@ export class GameStore {
   dispatch(action: GameAction): void {
     const { state } = reduce(this._state(), action, this.rules);
     this._state.set(state);
+  }
+
+  selectDie(dieId: DieId): void {
+    this.dispatch({ type: 'player/toggleDie', dieId });
+
+    const battle = this._state().battle;
+    const selected = battle?.selection.find((sel) => sel.dieId === dieId);
+    if (!battle || !selected || selected.targetId !== null) {
+      return;
+    }
+    const sharedTarget = battle.selection.find((sel) => sel.targetId !== null && this.isAttackDie(sel.dieId))?.targetId;
+    if (sharedTarget) {
+      this.dispatch({ type: 'player/setTarget', dieId, targetId: sharedTarget });
+    }
+  }
+
+  pickTarget(targetId: CombatantId): void {
+    const battle = this._state().battle;
+    if (!battle) {
+      return;
+    }
+    const alive = new Set(targetableFor(battle));
+    const pending =
+      battle.phase === 'player.retargeting'
+        ? battle.resolveQueue.filter((sel) => sel.targetId === null || !alive.has(sel.targetId))
+        : battle.selection;
+
+    for (const sel of pending) {
+      if (this.isAttackDie(sel.dieId)) {
+        this.dispatch({ type: 'player/setTarget', dieId: sel.dieId, targetId });
+      }
+    }
+  }
+
+  private isAttackDie(dieId: DieId): boolean {
+    return this._state().battle?.player.deck.catalog[dieId]?.kind === 'attack';
   }
 }
