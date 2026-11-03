@@ -1,0 +1,9 @@
+<p
+  class="turn-banner"
+  role="status"
+  aria-live="polite"
+  [class.turn-banner--player]="message()?.side === 'player'"
+  [class.turn-banner--enemy]="message()?.side === 'enemy'"
+>
+  {{ message()?.text }}
+</p>

@@ -6,6 +6,7 @@ import { reduce } from '../domain/engine/reduce';
 import { deckView, handView, type DeckViewEntry } from '../domain/engine/deck';
 import { targetableFor } from '../domain/engine/targeting';
 import { battleOutcome, type BattleOutcome } from '../domain/engine/outcome';
+import { turnMessage, type TurnMessage } from '../domain/engine/turn-message';
 import type { DieDef, DieId } from '../domain/model/die';
 import type { LogEntry } from '../domain/model/log';
 import { createRun } from '../domain/content/run-factory';
@@ -89,6 +90,11 @@ export class GameStore {
       .map((sel) => sel.targetId)
       .filter((id): id is CombatantId => id !== null && enemyIds.has(id));
     return [...new Set(ids)];
+  });
+
+  readonly turnMessage = computed<TurnMessage | null>(() => {
+    const battle = this._state().battle;
+    return battle ? turnMessage(battle) : null;
   });
 
   readonly canPickTarget = computed(() => {

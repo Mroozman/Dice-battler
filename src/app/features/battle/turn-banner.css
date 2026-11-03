@@ -1,0 +1,19 @@
+.turn-banner {
+  margin: 0;
+  padding: 0.4rem 1rem;
+  min-height: 1.5rem;
+  border-radius: 0.4rem;
+  border-left: 4px solid var(--ink);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-weight: 600;
+  text-align: center;
+}
+
+.turn-banner--player {
+  border-left-color: var(--player);
+}
+
+.turn-banner--enemy {
+  border-left-color: var(--enemy);
+}

@@ -2,13 +2,15 @@ import { Component, input, output } from '@angular/core';
 import type { Combatant, CombatantId } from '../../domain/model/combatant';
 import type { BattlePhase, StagedRoll } from '../../domain/model/battle';
 import { CombatantCard, type CombatantCardState } from '../../ui/combatant-card/combatant-card';
+import type { TurnMessage } from '../../domain/engine/turn-message';
 import { DieStage } from './die-stage';
+import { TurnBanner } from './turn-banner';
 
 const TARGETING_PHASES: ReadonlySet<BattlePhase> = new Set(['player.selecting', 'player.retargeting']);
 
 @Component({
   selector: 'app-battlefield',
-  imports: [CombatantCard, DieStage],
+  imports: [CombatantCard, DieStage, TurnBanner],
   templateUrl: './battlefield.html',
   styleUrl: './battlefield.css',
   host: {
@@ -21,6 +23,7 @@ export class Battlefield {
   readonly targetableIds = input<readonly CombatantId[]>([]);
   readonly canPickTarget = input(false);
   readonly pickedTargetIds = input<readonly CombatantId[]>([]);
+  readonly turnMessage = input<TurnMessage | null>(null);
   readonly phase = input<BattlePhase>('player.selecting');
   readonly staged = input<StagedRoll | null>(null);
   readonly deckPreviewEnabled = input(false);

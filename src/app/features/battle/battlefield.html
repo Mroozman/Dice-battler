@@ -1,4 +1,6 @@
 <div class="battlefield">
+  <app-turn-banner [message]="turnMessage()" />
+
   <div class="enemy-row" [class.enemy-row--boss]="isBoss()">
     @for (enemy of enemies(); track enemy.id; let i = $index) {
       <div class="enemy-slot">

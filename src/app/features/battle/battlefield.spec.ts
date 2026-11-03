@@ -220,6 +220,20 @@ describe('Battlefield', () => {
     expect(fixture.nativeElement.querySelector('app-deck-preview')).toBeTruthy();
   });
 
+  it('shows the turn message above the enemies', () => {
+    const fixture = TestBed.createComponent(Battlefield);
+    fixture.componentRef.setInput('enemies', [makeCombatant('e0', 5)]);
+    fixture.componentRef.setInput('player', makeCombatant('player', 20, 'player'));
+    fixture.componentRef.setInput('turnMessage', { side: 'player', text: 'Tura gracza: wybierz kości' });
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const banner = root.querySelector('.turn-banner') as HTMLElement;
+    const enemyRow = root.querySelector('.enemy-row') as HTMLElement;
+    expect(banner.textContent?.trim()).toBe('Tura gracza: wybierz kości');
+    expect(banner.compareDocumentPosition(enemyRow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('highlights only the living enemies that are currently picked as targets', () => {
     const fixture = TestBed.createComponent(Battlefield);
     const enemies = [makeCombatant('e0', 5), makeCombatant('e1', 5), makeCombatant('e2', 0)];

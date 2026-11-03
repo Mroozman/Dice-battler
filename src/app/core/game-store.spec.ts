@@ -170,6 +170,22 @@ describe('GameStore', () => {
       expect(store.pickedTargetIds()).toEqual([enemyIds[1]]);
     });
 
+    it('guides the player through the turn with a message that follows the selection', async () => {
+      const store = TestBed.inject(GameStore);
+      const { attacks, enemyIds } = await enterTwoEnemyBattleWithTwoAttackDice(store);
+
+      expect(store.turnMessage()?.text).toBe('Tura gracza: wybierz kości');
+
+      store.selectDie(attacks[0].id);
+      expect(store.turnMessage()?.text).toBe('Tura gracza: wybierz cel');
+
+      store.pickTarget(enemyIds[0]);
+      expect(store.turnMessage()?.text).toBe('Tura gracza: wybierz kości');
+
+      store.selectDie(attacks[1].id);
+      expect(store.turnMessage()?.text).toBe('Tura gracza: potwierdź wybór');
+    });
+
     it('does not target the support die and ignores a pick when no attack die is selected', async () => {
       const store = TestBed.inject(GameStore);
       const { support, enemyIds } = await enterTwoEnemyBattleWithTwoAttackDice(store);
