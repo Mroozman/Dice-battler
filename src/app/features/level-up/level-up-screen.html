@@ -1,0 +1,15 @@
+<div [class]="'level-up ' + shadeClass()">
+  <h1 class="level-up-title">Awans</h1>
+  <p class="level-up-hint">Wybierz statystykę do wzmocnienia (klawisze 1–3)</p>
+  <div class="level-up-options">
+    @for (option of options; track option.stat; let i = $index) {
+      <button type="button" class="level-up-option" [attr.data-stat]="option.stat" (click)="onChoose(option.stat)">
+        <span class="level-up-key">{{ i + 1 }}</span>
+        <span class="level-up-icon" aria-hidden="true">{{ option.icon }}</span>
+        <span class="level-up-label">{{ option.label }}</span>
+        <span class="level-up-change">{{ stats()[option.stat] }} → {{ stats()[option.stat] + 1 }}</span>
+        <span class="level-up-description">{{ option.description }}</span>
+      </button>
+    }
+  </div>
+</div>

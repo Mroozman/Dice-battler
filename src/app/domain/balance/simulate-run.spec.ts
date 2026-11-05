@@ -36,7 +36,8 @@ describe('simulateRun', () => {
   });
 
   it('produces different outcomes across different seeds, not a single hardcoded result', async () => {
-    const results = await Promise.all(SEEDS.map((seed) => simulateRun(seed, RULES)));
+    const manySeeds = Array.from({ length: 40 }, (_, i) => `variety-${i}`);
+    const results = await Promise.all(manySeeds.map((seed) => simulateRun(seed, RULES)));
     const distinctStagesReached = new Set(results.map((r) => r.stageReached));
 
     expect(distinctStagesReached.size).toBeGreaterThan(1);

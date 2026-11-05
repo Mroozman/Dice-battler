@@ -187,7 +187,7 @@ describe('TurnEngine', () => {
     expect(store.run().pendingReward).not.toBeNull();
   });
 
-  it('reacts to a resolved reward by advancing to the next stage intro', async () => {
+  it('reacts to a resolved reward by advancing to the level-up choice', async () => {
     const store = TestBed.inject(GameStore);
     await enterFirstBattle(store);
     TestBed.inject(TurnEngine);
@@ -204,7 +204,7 @@ describe('TurnEngine', () => {
     store.dispatch({ type: 'reward/skip' });
     TestBed.tick();
 
-    expect(store.screen()).toBe('stageIntro');
+    expect(store.screen()).toBe('levelUp');
     expect(store.run().stageIndex).toBe(1);
   });
 

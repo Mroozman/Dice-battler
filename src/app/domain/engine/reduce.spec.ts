@@ -1257,8 +1257,58 @@ function makeStageDef(index: number, kind: 'group' | 'boss' = 'group'): StageDef
   };
 }
 
+describe('stats/increase', () => {
+  function levelUpState(): GameState {
+    const state = makeVictoryState();
+    const withStages: GameState = {
+      ...state,
+      run: { ...state.run, stages: [makeStageDef(0), makeStageDef(1)], stageIndex: 0 },
+    };
+    const offered = reduce(withStages, { type: 'reward/offer', die: makeDie('reward-0', 'shield') }, RULES).state;
+    const afterSkip = reduce(offered, { type: 'reward/skip' }, RULES).state;
+    return reduce(afterSkip, { type: 'stage/advance' }, RULES).state;
+  }
+
+  it('adds one point to the chosen stat and continues to the stage intro', () => {
+    const state = levelUpState();
+
+    const { state: next } = reduce(state, { type: 'stats/increase', stat: 'vitality' }, RULES);
+
+    expect(next.screen).toBe('stageIntro');
+    expect(next.run.stats).toEqual({ strength: 0, vitality: 1, defense: 0 });
+    expect(next.run.stageIndex).toBe(1);
+  });
+
+  it('accumulates points across level ups without touching the other stats', () => {
+    const state = levelUpState();
+    const withPoints: GameState = { ...state, run: { ...state.run, stats: { strength: 2, vitality: 0, defense: 1 } } };
+
+    const { state: next } = reduce(withPoints, { type: 'stats/increase', stat: 'strength' }, RULES);
+
+    expect(next.run.stats).toEqual({ strength: 3, vitality: 0, defense: 1 });
+  });
+
+  it('is rejected outside the levelUp screen', () => {
+    const state = makeState(makeBattle(makePlayer(makeDeck([], 0)), [makeEnemy('e0', 5)]));
+
+    expect(() => reduce(state, { type: 'stats/increase', stat: 'strength' }, RULES)).toThrow();
+  });
+
+  it('is not offered after the boss: the run ends instead', () => {
+    const state = makeVictoryState();
+    const bossState: GameState = {
+      ...state,
+      run: { ...state.run, stages: [makeStageDef(0, 'boss')], stageIndex: 0 },
+    };
+
+    const { state: next } = reduce(bossState, { type: 'stage/advance' }, RULES);
+
+    expect(next.screen).toBe('runOver');
+  });
+});
+
 describe('stage/advance', () => {
-  it('regenerates HP (capped at maxHp), logs it, and moves to stageIntro for the next stage', () => {
+  it('regenerates HP (capped at maxHp), logs it, and moves to levelUp for the next stage', () => {
     const state = makeVictoryState(); // player hp: 18, maxHp: 20
     const withStages: GameState = {
       ...state,
@@ -1269,7 +1319,7 @@ describe('stage/advance', () => {
 
     const { state: next } = reduce(afterSkip, { type: 'stage/advance' }, RULES);
 
-    expect(next.screen).toBe('stageIntro');
+    expect(next.screen).toBe('levelUp');
     expect(next.battle).toBeNull();
     expect(next.run.stageIndex).toBe(1);
     expect(next.run.playerHp).toBe(20); // capped: only 2 hp were missing, not the full 0.25 * 20 = 5

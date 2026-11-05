@@ -1,6 +1,7 @@
 import type { DieDef, DieId } from './die';
 import type { CombatantId } from './combatant';
 import type { RunState } from './run';
+import type { StatKind } from './stats';
 
 export type GameAction =
   | { type: 'player/toggleDie'; dieId: DieId }
@@ -17,4 +18,5 @@ export type GameAction =
   | { type: 'reward/offer'; die: DieDef }
   | { type: 'reward/swap'; replacedId: DieId }
   | { type: 'reward/skip' }
-  | { type: 'stage/advance' };
+  | { type: 'stage/advance' }
+  | { type: 'stats/increase'; stat: StatKind };

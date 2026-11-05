@@ -21,6 +21,7 @@
     <aside class="zone deck" style="grid-area: deck">
       <h2 class="zone-title">Talia</h2>
       <app-deck-panel [entries]="store.deckView()" />
+      <app-stats-panel [stats]="store.run().stats" />
     </aside>
 
     <section class="zone board" style="grid-area: board">

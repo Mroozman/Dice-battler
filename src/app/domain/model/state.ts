@@ -2,7 +2,7 @@ import type { RunState } from './run';
 import type { BattleState } from './battle';
 import type { LogEntry } from './log';
 
-export type Screen = 'title' | 'stageIntro' | 'battle' | 'reward' | 'runOver';
+export type Screen = 'title' | 'stageIntro' | 'battle' | 'reward' | 'levelUp' | 'runOver';
 
 export interface GameState {
   readonly schemaVersion: 1;

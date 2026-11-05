@@ -8,10 +8,11 @@ import { DeckPanel } from './deck-panel';
 import { Battlefield } from './battlefield';
 import { HandBar } from './hand-bar';
 import { BattleLog } from './battle-log';
+import { StatsPanel } from './stats-panel';
 
 @Component({
   selector: 'app-battle-screen',
-  imports: [DeckPanel, Battlefield, HandBar, BattleLog],
+  imports: [DeckPanel, Battlefield, HandBar, BattleLog, StatsPanel],
   templateUrl: './battle-screen.html',
   styleUrl: './battle-screen.css',
 })

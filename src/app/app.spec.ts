@@ -34,6 +34,25 @@ describe('App', () => {
     expect(compiled.querySelector('app-stage-intro')).toBeTruthy();
   });
 
+  it('shows the level-up choice and returns to the stage intro after a stat is chosen', async () => {
+    const fixture = TestBed.createComponent(App);
+    const compiled = fixture.nativeElement as HTMLElement;
+    const store = TestBed.inject(GameStore);
+    await store.startNewRun();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (store as any)._state.set({ ...store.state(), screen: 'levelUp', run: { ...store.run(), stageIndex: 1 } });
+    fixture.detectChanges();
+
+    expect(compiled.querySelector('app-level-up-screen')).toBeTruthy();
+
+    (compiled.querySelector('[data-stat="defense"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(store.run().stats.defense).toBe(1);
+    expect(compiled.querySelector('app-stage-intro')).toBeTruthy();
+    expect(compiled.querySelector('app-level-up-screen')).toBeNull();
+  });
+
   it('renders the battle screen once the stage is entered', async () => {
     const fixture = TestBed.createComponent(App);
     const store = TestBed.inject(GameStore);

@@ -18,6 +18,13 @@
       (skip)="onRewardSkip()"
     />
   }
+  @case ('levelUp') {
+    <app-level-up-screen
+      [stats]="store.run().stats"
+      [stage]="store.run().stages[store.run().stageIndex]"
+      (chosen)="onStatChosen($event)"
+    />
+  }
   @case ('runOver') {
     <app-run-over [outcome]="store.run().outcome === 'defeat' ? 'defeat' : 'victory'" />
   }

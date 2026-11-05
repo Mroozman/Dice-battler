@@ -13,7 +13,8 @@ import { GreedyPolicy } from '../ai/greedy-policy';
 import { battleOutcome } from './outcome';
 import { logAttack, logDeath, logHeal, logRegen, logReshuffle, logRoundStart, logShield } from './log';
 import type { LogContext, RollBonusDetail } from './log';
-import { rollBonus, STAT_BY_DIE_KIND } from './stats';
+import { increaseStat, rollBonus, STAT_BY_DIE_KIND } from './stats';
+import type { StatKind } from '../model/stats';
 
 export interface ReduceRules {
   readonly handSize: number;
@@ -63,6 +64,8 @@ export function reduce(state: GameState, action: GameAction, rules: ReduceRules)
       return reduceRewardSkip(state);
     case 'stage/advance':
       return reduceStageAdvance(state, rules);
+    case 'stats/increase':
+      return reduceStatsIncrease(state, action.stat);
   }
 }
 
@@ -616,10 +619,22 @@ function reduceStageAdvance(state: GameState, rules: ReduceRules): Reduction {
       {
         ...state,
         battle: null,
-        screen: 'stageIntro',
+        screen: 'levelUp',
         run: { ...state.run, stageIndex: nextStageIndex, playerHp, lastHealAmount: healedAmount },
       },
       entry,
     ),
   );
+}
+
+function reduceStatsIncrease(state: GameState, stat: StatKind): Reduction {
+  if (state.screen !== 'levelUp') {
+    throw new Error(`Cannot increase a stat outside levelUp (screen: ${state.screen})`);
+  }
+
+  return noEffects({
+    ...state,
+    screen: 'stageIntro',
+    run: { ...state.run, stats: increaseStat(state.run.stats, stat) },
+  });
 }

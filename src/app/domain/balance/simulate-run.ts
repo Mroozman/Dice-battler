@@ -11,6 +11,7 @@ import { createGameFaker } from '../content/game-faker';
 import { rollReward } from '../content/reward-factory';
 import { GreedyPlayerPolicy } from '../ai/greedy-player-policy';
 import { chooseRewardAction } from '../ai/greedy-reward-policy';
+import { chooseStatIncrease } from '../ai/greedy-stat-policy';
 
 export interface RunResult {
   readonly outcome: 'victory' | 'defeat';
@@ -71,6 +72,9 @@ export async function simulateRun(seed: string, rules: GameRules): Promise<RunRe
         return;
       case 'reward':
         advanceReward();
+        return;
+      case 'levelUp':
+        dispatch({ type: 'stats/increase', stat: chooseStatIncrease(state.run.playerHp, state.run.playerMaxHp) });
         return;
     }
   }

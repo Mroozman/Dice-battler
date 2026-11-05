@@ -103,8 +103,12 @@ describe('a full run, scripted end to end (M6 point 9)', () => {
     expect(state.run.playerCatalog[reward.id]).toEqual(reward);
 
     dispatch({ type: 'stage/advance' });
-    expect(state.screen).toBe('stageIntro');
+    expect(state.screen).toBe('levelUp');
     expect(state.run.stageIndex).toBe(1);
+
+    dispatch({ type: 'stats/increase', stat: 'strength' });
+    expect(state.screen).toBe('stageIntro');
+    expect(state.run.stats.strength).toBe(1);
     // 12 hp -> +round(0.25 * 20) = 5, well under the maxHp-hp=8 cap, so the full amount applies.
     expect(state.run.playerHp).toBe(17);
     expect(state.run.lastHealAmount).toBe(5);

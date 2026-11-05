@@ -40,6 +40,22 @@ describe('BattleScreen', () => {
     expect(root.querySelectorAll('.hand-bar .die').length).toBe(3);
   });
 
+  it('shows the current stats in a panel below the deck', async () => {
+    const store = TestBed.inject(GameStore);
+    await enterFirstBattle(store);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (store as any)._state.set({
+      ...store.state(),
+      run: { ...store.run(), stats: { strength: 2, vitality: 0, defense: 1 } },
+    });
+    const fixture = TestBed.createComponent(BattleScreen);
+    fixture.detectChanges();
+
+    const deckZone = fixture.nativeElement.querySelector('.zone.deck') as HTMLElement;
+    expect(deckZone.querySelector('app-stats-panel')).toBeTruthy();
+    expect(deckZone.querySelector('[data-stat="strength"] .stats-panel-value')?.textContent).toBe('2');
+  });
+
   it('darkens the background per stage and shows boss styling only on the boss stage', async () => {
     const store = TestBed.inject(GameStore);
     await enterFirstBattle(store);
