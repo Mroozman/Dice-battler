@@ -1,6 +1,26 @@
 import type { LogEntry } from '../model/log';
 import type { Combatant } from '../model/combatant';
 import type { DieSides } from '../model/die';
+import type { StatKind } from '../model/stats';
+
+export interface RollBonusDetail {
+  readonly roll: number;
+  readonly bonus: number;
+  readonly stat: StatKind;
+}
+
+const STAT_GENITIVE: Readonly<Record<StatKind, string>> = {
+  strength: 'siły',
+  vitality: 'żywotności',
+  defense: 'obrony',
+};
+
+function rolledWithBonus(detail: RollBonusDetail | undefined): string | null {
+  if (!detail || detail.bonus <= 0) {
+    return null;
+  }
+  return `${detail.roll} (+${detail.bonus} ${STAT_GENITIVE[detail.stat]})`;
+}
 
 export interface LogContext {
   readonly log: readonly LogEntry[];
@@ -18,38 +38,60 @@ export function logAttack(
   target: Combatant,
   sides: DieSides,
   amount: number,
+  detail?: RollBonusDetail,
 ): LogEntry {
+  const rolled = rolledWithBonus(detail);
   return {
     id: nextId(ctx.log),
     stageIndex: ctx.stageIndex,
     round: ctx.round,
     tone: 'attack',
-    text: `${actor.name} rzuca D${sides} → ${amount} obrażeń w ${target.name}`,
+    text: rolled
+      ? `${actor.name} rzuca D${sides} → ${rolled} = ${amount} obrażeń w ${target.name}`
+      : `${actor.name} rzuca D${sides} → ${amount} obrażeń w ${target.name}`,
     actorId: actor.id,
     targetId: target.id,
     amount,
   };
 }
 
-export function logHeal(ctx: LogContext, actor: Combatant, sides: DieSides, healedAmount: number): LogEntry {
+export function logHeal(
+  ctx: LogContext,
+  actor: Combatant,
+  sides: DieSides,
+  healedAmount: number,
+  detail?: RollBonusDetail,
+): LogEntry {
+  const rolled = rolledWithBonus(detail);
   return {
     id: nextId(ctx.log),
     stageIndex: ctx.stageIndex,
     round: ctx.round,
     tone: 'heal',
-    text: `${actor.name} rzuca D${sides} → leczy się o ${healedAmount}`,
+    text: rolled
+      ? `${actor.name} rzuca D${sides} → ${rolled}, leczy się o ${healedAmount}`
+      : `${actor.name} rzuca D${sides} → leczy się o ${healedAmount}`,
     actorId: actor.id,
     amount: healedAmount,
   };
 }
 
-export function logShield(ctx: LogContext, actor: Combatant, sides: DieSides, amount: number): LogEntry {
+export function logShield(
+  ctx: LogContext,
+  actor: Combatant,
+  sides: DieSides,
+  amount: number,
+  detail?: RollBonusDetail,
+): LogEntry {
+  const rolled = rolledWithBonus(detail);
   return {
     id: nextId(ctx.log),
     stageIndex: ctx.stageIndex,
     round: ctx.round,
     tone: 'shield',
-    text: `${actor.name} rzuca D${sides} → +${amount} osłony`,
+    text: rolled
+      ? `${actor.name} rzuca D${sides} → ${rolled} = +${amount} osłony`
+      : `${actor.name} rzuca D${sides} → +${amount} osłony`,
     actorId: actor.id,
     amount,
   };

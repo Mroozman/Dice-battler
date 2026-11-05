@@ -1,3 +1,4 @@
+import { ZERO_STATS } from '../domain/model/stats';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import type { GameState } from '../domain/model/state';
 import type { GameAction } from '../domain/model/actions';
@@ -26,7 +27,7 @@ function createLoadingState(): GameState {
       playerMaxHp: 0,
       pendingReward: null,
       outcome: 'ongoing',
-      lastHealAmount: 0,
+      lastHealAmount: 0, stats: ZERO_STATS,
     },
     battle: null,
     log: [],

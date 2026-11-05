@@ -1,6 +1,7 @@
 import type { DieDef, DieId } from './die';
 import type { Deck } from './deck';
 import type { CombatantId } from './combatant';
+import type { PlayerStats } from './stats';
 
 export type StageKind = 'group' | 'boss';
 
@@ -31,4 +32,5 @@ export interface RunState {
   readonly pendingReward: DieDef | null;
   readonly outcome: 'ongoing' | 'victory' | 'defeat';
   readonly lastHealAmount: number;
+  readonly stats: PlayerStats;
 }

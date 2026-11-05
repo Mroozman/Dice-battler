@@ -1,3 +1,4 @@
+import { ZERO_STATS } from '../model/stats';
 import { reduce } from './reduce';
 import type { ReduceRules } from './reduce';
 import type { GameState } from '../model/state';
@@ -49,7 +50,7 @@ describe('a full run, scripted end to end (M6 point 9)', () => {
       playerMaxHp: 20,
       pendingReward: null,
       outcome: 'ongoing',
-      lastHealAmount: 0,
+      lastHealAmount: 0, stats: ZERO_STATS,
     };
 
     let state: GameState = {
@@ -57,7 +58,7 @@ describe('a full run, scripted end to end (M6 point 9)', () => {
       seed: 'run-e2e-seed',
       rngCursor: 0,
       screen: 'title',
-      run: { stageIndex: 0, stages: [], playerCatalog: {}, playerHp: 0, playerMaxHp: 0, pendingReward: null, outcome: 'ongoing', lastHealAmount: 0 },
+      run: { stageIndex: 0, stages: [], playerCatalog: {}, playerHp: 0, playerMaxHp: 0, pendingReward: null, outcome: 'ongoing', lastHealAmount: 0, stats: ZERO_STATS },
       battle: null,
       log: [],
     };

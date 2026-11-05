@@ -1,3 +1,4 @@
+import { ZERO_STATS } from '../model/stats';
 import { reduce } from './reduce';
 import type { ReduceRules } from './reduce';
 import { createRng, rollDie } from './rng';
@@ -86,7 +87,7 @@ function makeInitialState(seed: string): GameState {
       playerMaxHp: player.maxHp,
       pendingReward: null,
       outcome: 'ongoing',
-      lastHealAmount: 0,
+      lastHealAmount: 0, stats: ZERO_STATS,
     },
     battle,
     log: [],

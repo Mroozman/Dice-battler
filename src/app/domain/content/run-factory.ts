@@ -1,3 +1,4 @@
+import { ZERO_STATS } from '../model/stats';
 import type { Faker } from '@faker-js/faker';
 import type { ArchetypeDef } from './bestiary-locale';
 import { archetypes, createGameFaker, epithets } from './game-faker';
@@ -75,6 +76,6 @@ export async function createRun(seed: string, rules: GameRules): Promise<RunStat
     playerMaxHp: rules.playerMaxHp,
     pendingReward: null,
     outcome: 'ongoing',
-    lastHealAmount: 0,
+    lastHealAmount: 0, stats: ZERO_STATS,
   };
 }

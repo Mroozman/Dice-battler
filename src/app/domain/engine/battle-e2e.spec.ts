@@ -1,3 +1,4 @@
+import { ZERO_STATS } from '../model/stats';
 import { reduce } from './reduce';
 import type { ReduceRules } from './reduce';
 import { battleOutcome } from './outcome';
@@ -77,7 +78,7 @@ function makeState(battle: BattleState): GameState {
       playerMaxHp: battle.player.maxHp,
       pendingReward: null,
       outcome: 'ongoing',
-      lastHealAmount: 0,
+      lastHealAmount: 0, stats: ZERO_STATS,
     },
     battle,
     log: [],

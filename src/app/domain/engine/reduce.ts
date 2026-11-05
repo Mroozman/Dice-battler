@@ -12,7 +12,8 @@ import { needsTarget, resolveEnemyTarget, targetableFor } from './targeting';
 import { GreedyPolicy } from '../ai/greedy-policy';
 import { battleOutcome } from './outcome';
 import { logAttack, logDeath, logHeal, logRegen, logReshuffle, logRoundStart, logShield } from './log';
-import type { LogContext } from './log';
+import type { LogContext, RollBonusDetail } from './log';
+import { rollBonus, STAT_BY_DIE_KIND } from './stats';
 
 export interface ReduceRules {
   readonly handSize: number;
@@ -247,9 +248,11 @@ function reduceRollApply(state: GameState, rules: ReduceRules): Reduction {
   }
 
   const sel = battle.resolveQueue[0];
-  const amount = rules.effectFromRoll(staged.value);
-  const effects: GameEffect[] = [];
   const ownerId = staged.ownerId;
+  const bonus = ownerId === battle.player.id ? rollBonus(state.run.stats, staged.kind) : 0;
+  const amount = rules.effectFromRoll(staged.value) + bonus;
+  const bonusDetail: RollBonusDetail = { roll: staged.value, bonus, stat: STAT_BY_DIE_KIND[staged.kind] };
+  const effects: GameEffect[] = [];
   const pendingEntries: LogEntry[] = [];
   const ctx = (): LogContext => ({
     log: [...state.log, ...pendingEntries],
@@ -268,7 +271,7 @@ function reduceRollApply(state: GameState, rules: ReduceRules): Reduction {
     const wasAlive = target.hp > 0;
     const updatedTarget = applyDamage(target, amount);
     next = withCombatant(next, target.id, updatedTarget);
-    pendingEntries.push(logAttack(ctx(), actor, target, staged.sides, amount));
+    pendingEntries.push(logAttack(ctx(), actor, target, staged.sides, amount, bonusDetail));
     if (wasAlive && updatedTarget.hp === 0) {
       effects.push({ type: 'combatant/died', combatantId: updatedTarget.id });
       pendingEntries.push(logDeath(ctx(), updatedTarget));
@@ -278,11 +281,11 @@ function reduceRollApply(state: GameState, rules: ReduceRules): Reduction {
     if (staged.kind === 'heal') {
       const { combatant: updatedActor, healedAmount } = applyHeal(actor, amount);
       next = withCombatant(next, ownerId, updatedActor);
-      pendingEntries.push(logHeal(ctx(), actor, staged.sides, healedAmount));
+      pendingEntries.push(logHeal(ctx(), actor, staged.sides, healedAmount, bonusDetail));
     } else {
       const updatedActor = applyShield(actor, amount);
       next = withCombatant(next, ownerId, updatedActor);
-      pendingEntries.push(logShield(ctx(), actor, staged.sides, amount));
+      pendingEntries.push(logShield(ctx(), actor, staged.sides, amount, bonusDetail));
     }
   }
 

@@ -1,3 +1,4 @@
+import { ZERO_STATS } from '../model/stats';
 import { reduce } from './reduce';
 import type { ReduceRules } from './reduce';
 import type { GameState } from '../model/state';
@@ -89,7 +90,7 @@ function makeRunState(stages: readonly StageDef[], overrides: Partial<RunState> 
     playerMaxHp: 20,
     pendingReward: null,
     outcome: 'ongoing',
-    lastHealAmount: 0,
+    lastHealAmount: 0, stats: ZERO_STATS,
     ...overrides,
   };
 }
@@ -121,7 +122,7 @@ function makeState(battle: BattleState, overrides: Partial<GameState> = {}): Gam
       playerMaxHp: battle.player.maxHp,
       pendingReward: null,
       outcome: 'ongoing',
-      lastHealAmount: 0,
+      lastHealAmount: 0, stats: ZERO_STATS,
     },
     battle,
     log: [],
@@ -359,6 +360,65 @@ describe('roll/apply', () => {
     expect(battleAfter.resolveQueue.map((s) => s.dieId)).toEqual([heal.id]);
     expect(battleAfter.staged).toEqual({ dieId: heal.id, sides: 6, kind: 'heal', ownerId: 'player', value: null });
     expect(effects).toEqual([]);
+  });
+
+  it('adds the strength bonus to a player attack, leaving the rolled value raw', () => {
+    const atk = makeDie('atk', 'attack');
+    const enemy = makeEnemy('e0', 20);
+    const battle = makeBattle(makePlayer(makeDeck([atk], 1)), [enemy], {
+      phase: 'player.resolving',
+      resolveQueue: [{ dieId: atk.id, targetId: enemy.id }],
+      staged: { dieId: atk.id, sides: 6, kind: 'attack', ownerId: 'player' as CombatantId, value: 3 },
+    });
+    const base = makeState(battle);
+    const state = { ...base, run: { ...base.run, stats: { strength: 2, vitality: 0, defense: 0 } } };
+
+    const { state: next } = reduce(state, { type: 'roll/apply' }, RULES);
+
+    expect(next.battle!.enemies[0].hp).toBe(15);
+    expect(next.log[0].amount).toBe(5);
+    expect(next.log[0].text).toBe('Player rzuca D6 → 3 (+2 siły) = 5 obrażeń w e0');
+  });
+
+  it('adds the vitality bonus to a player heal and the defense bonus to a player shield', () => {
+    const [heal, shield] = [makeDie('heal', 'heal'), makeDie('shield', 'shield')];
+    const player = makePlayer(makeDeck([heal, shield], 2), { hp: 5, maxHp: 20 });
+    const battle = makeBattle(player, [makeEnemy('e0', 5)], {
+      phase: 'player.resolving',
+      resolveQueue: [
+        { dieId: heal.id, targetId: player.id },
+        { dieId: shield.id, targetId: player.id },
+      ],
+      staged: { dieId: heal.id, sides: 6, kind: 'heal', ownerId: player.id, value: 2 },
+    });
+    const base = makeState(battle);
+    const state = { ...base, run: { ...base.run, stats: { strength: 0, vitality: 3, defense: 1 } } };
+
+    const afterHeal = reduce(state, { type: 'roll/apply' }, RULES).state;
+    expect(afterHeal.battle!.player.hp).toBe(10);
+
+    const revealed = reduce(afterHeal, { type: 'roll/reveal', value: 4 }, RULES).state;
+    const afterShield = reduce(revealed, { type: 'roll/apply' }, RULES).state;
+    expect(afterShield.battle!.player.shield).toBe(5);
+  });
+
+  it('gives enemies no stat bonus even when the player has stat points', () => {
+    const atk = makeDie('enemy-atk', 'attack');
+    const enemy = makeEnemy('e0', 5, { deck: makeDeck([atk], 1) });
+    const player = makePlayer(makeDeck([], 0));
+    const battle = makeBattle(player, [enemy], {
+      phase: 'player.resolving',
+      activeCombatantId: enemy.id,
+      resolveQueue: [{ dieId: atk.id, targetId: player.id }],
+      staged: { dieId: atk.id, sides: 6, kind: 'attack', ownerId: enemy.id, value: 3 },
+    });
+    const base = makeState(battle);
+    const state = { ...base, run: { ...base.run, stats: { strength: 5, vitality: 5, defense: 5 } } };
+
+    const { state: next } = reduce(state, { type: 'roll/apply' }, RULES);
+
+    expect(next.battle!.player.hp).toBe(player.hp - 3);
+    expect(next.log[0].text).not.toContain('siły');
   });
 
   it('applies heal to the player', () => {

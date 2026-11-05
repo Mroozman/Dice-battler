@@ -35,6 +35,24 @@ describe('log entry constructors', () => {
     expect(entry.amount).toBe(4);
   });
 
+  it('log entries show the stat bonus next to the raw roll, and stay unchanged without one', () => {
+    const actor = makeCombatant('player', 'Gracz');
+    const target = makeCombatant('e0', 'Zbir');
+
+    expect(logAttack(makeContext(), actor, target, 6, 6, { roll: 4, bonus: 2, stat: 'strength' }).text).toBe(
+      'Gracz rzuca D6 → 4 (+2 siły) = 6 obrażeń w Zbir',
+    );
+    expect(logHeal(makeContext(), actor, 4, 3, { roll: 2, bonus: 1, stat: 'vitality' }).text).toBe(
+      'Gracz rzuca D4 → 2 (+1 żywotności), leczy się o 3',
+    );
+    expect(logShield(makeContext(), actor, 4, 4, { roll: 3, bonus: 1, stat: 'defense' }).text).toBe(
+      'Gracz rzuca D4 → 3 (+1 obrony) = +4 osłony',
+    );
+    expect(logAttack(makeContext(), actor, target, 6, 4, { roll: 4, bonus: 0, stat: 'strength' }).text).toBe(
+      'Gracz rzuca D6 → 4 obrażeń w Zbir',
+    );
+  });
+
   it('logHeal reports the actually healed amount, not necessarily the raw roll', () => {
     const actor = makeCombatant('e0', 'Zbir');
 
