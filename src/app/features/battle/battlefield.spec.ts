@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { Battlefield } from './battlefield';
 import type { Combatant, CombatantId } from '../../domain/model/combatant';
+import type { StagedRoll } from '../../domain/model/battle';
+import type { DieId } from '../../domain/model/die';
 
 function makeCombatant(id: string, hp: number, kind: Combatant['kind'] = 'enemy'): Combatant {
   return {
@@ -275,5 +277,50 @@ describe('Battlefield', () => {
     expect(fixture.nativeElement.querySelector('.enemy-number')).toBeTruthy();
     const card = fixture.nativeElement.querySelector('.combatant-card--enemy') as HTMLElement;
     expect(card.classList.contains('combatant-card--boss')).toBe(false);
+  });
+
+  describe('bonus die', () => {
+    const PLAYER_ID = 'player' as CombatantId;
+    const STATS = { strength: 2, vitality: 1, defense: 0 };
+
+    function createWithStaged(ownerId: string, kind: StagedRoll['kind'], value: number | null) {
+      const fixture = TestBed.createComponent(Battlefield);
+      fixture.componentRef.setInput('player', makeCombatant('player', 20, 'player'));
+      fixture.componentRef.setInput('stats', STATS);
+      fixture.componentRef.setInput('staged', {
+        dieId: 'd' as DieId,
+        sides: 6,
+        kind,
+        ownerId: ownerId as CombatantId,
+        value,
+      });
+      fixture.detectChanges();
+      return fixture;
+    }
+
+    it('shows the stat bonus for the staged player roll next to the roll die', () => {
+      const fixture = createWithStaged(PLAYER_ID, 'attack', null);
+
+      const bonus = fixture.nativeElement.querySelector('.bonus-die') as HTMLElement;
+      expect(bonus.classList.contains('bonus-die--hidden')).toBe(false);
+      expect(bonus.querySelector('.bonus-die-value')?.textContent).toBe('+2');
+      expect(fixture.componentInstance.stagedBonus()).toBe(2);
+    });
+
+    it('uses the stat matching the staged die kind', () => {
+      expect(createWithStaged(PLAYER_ID, 'heal', 3).componentInstance.stagedBonus()).toBe(1);
+      expect(createWithStaged(PLAYER_ID, 'shield', 3).componentInstance.stagedBonus()).toBe(0);
+    });
+
+    it('hides the bonus for enemy rolls and when nothing is staged', () => {
+      const enemyRoll = createWithStaged('e0', 'attack', 4);
+      expect(enemyRoll.componentInstance.stagedBonus()).toBeNull();
+      expect(enemyRoll.nativeElement.querySelector('.bonus-die').classList.contains('bonus-die--hidden')).toBe(true);
+
+      const idle = TestBed.createComponent(Battlefield);
+      idle.componentRef.setInput('player', makeCombatant('player', 20, 'player'));
+      idle.detectChanges();
+      expect(idle.componentInstance.stagedBonus()).toBeNull();
+    });
   });
 });

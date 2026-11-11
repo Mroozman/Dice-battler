@@ -1,0 +1,21 @@
+.tooltip-host {
+  position: fixed;
+  z-index: 1000;
+  transform: translate(-50%, -100%);
+  width: max-content;
+  max-width: 16rem;
+  box-sizing: border-box;
+  padding: 0.35rem 0.55rem;
+  border-radius: 0.35rem;
+  border: 1px solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.8rem;
+  line-height: 1.3;
+  text-align: center;
+  pointer-events: none;
+}
+
+.tooltip-host--below {
+  transform: translate(-50%, 0);
+}

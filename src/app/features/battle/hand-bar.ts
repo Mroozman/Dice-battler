@@ -3,6 +3,8 @@ import type { DieDef, DieId } from '../../domain/model/die';
 import type { SelectedDie } from '../../domain/model/battle';
 import type { DieStatus } from '../../domain/engine/deck';
 import { Die } from '../../ui/die/die';
+import { ZERO_STATS, type PlayerStats } from '../../domain/model/stats';
+import { rollBonus } from '../../domain/engine/stats';
 
 @Component({
   selector: 'app-hand-bar',
@@ -15,11 +17,16 @@ export class HandBar {
   readonly selection = input<readonly SelectedDie[]>([]);
   readonly canConfirm = input(false);
   readonly maxSelectable = input.required<number>();
+  readonly stats = input<PlayerStats>(ZERO_STATS);
 
   readonly toggled = output<DieId>();
   readonly confirmed = output<void>();
 
   readonly handStatus: DieStatus = 'hand';
+
+  bonusFor(def: DieDef): number {
+    return rollBonus(this.stats(), def.kind);
+  }
 
   isSelected(dieId: DieId): boolean {
     return this.selection().some((sel) => sel.dieId === dieId);

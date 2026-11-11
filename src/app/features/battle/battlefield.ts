@@ -1,4 +1,8 @@
-import { Component, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
+import type { DieKind } from '../../domain/model/die';
+import { ZERO_STATS, type PlayerStats } from '../../domain/model/stats';
+import { rollBonus } from '../../domain/engine/stats';
+import { BonusDie } from './bonus-die';
 import type { Combatant, CombatantId } from '../../domain/model/combatant';
 import type { BattlePhase, StagedRoll } from '../../domain/model/battle';
 import { CombatantCard, type CombatantCardState } from '../../ui/combatant-card/combatant-card';
@@ -10,7 +14,7 @@ const TARGETING_PHASES: ReadonlySet<BattlePhase> = new Set(['player.selecting', 
 
 @Component({
   selector: 'app-battlefield',
-  imports: [CombatantCard, DieStage, TurnBanner],
+  imports: [CombatantCard, DieStage, BonusDie, TurnBanner],
   templateUrl: './battlefield.html',
   styleUrl: './battlefield.css',
   host: {
@@ -28,6 +32,18 @@ export class Battlefield {
   readonly staged = input<StagedRoll | null>(null);
   readonly deckPreviewEnabled = input(false);
   readonly isBoss = input(false);
+  readonly stats = input<PlayerStats>(ZERO_STATS);
+
+  readonly stagedBonus = computed<number | null>(() => {
+    const staged = this.staged();
+    if (!staged || staged.ownerId !== this.player().id) {
+      return null;
+    }
+    return rollBonus(this.stats(), staged.kind);
+  });
+
+  readonly stagedKind = computed<DieKind | null>(() => this.staged()?.kind ?? null);
+  readonly stagedRevealed = computed(() => this.staged()?.value != null);
 
   readonly targetPicked = output<CombatantId>();
 

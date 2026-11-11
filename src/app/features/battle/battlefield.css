@@ -5,6 +5,18 @@
   gap: 1rem;
 }
 
+.dice-stage-row {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.dice-stage-row app-bonus-die {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 1rem);
+}
+
 .enemy-row {
   display: flex;
   gap: 1rem;

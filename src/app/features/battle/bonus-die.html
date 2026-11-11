@@ -1,0 +1,13 @@
+<div
+  class="bonus-die"
+  [class.bonus-die--hidden]="!isVisible()"
+  [class.bonus-die--pulse]="isPulsing()"
+  [attr.data-tooltip]="isVisible() ? tooltip() : null"
+  [attr.aria-label]="isVisible() ? tooltip() : null"
+  [attr.aria-hidden]="isVisible() ? null : 'true'"
+  [attr.tabindex]="isVisible() ? 0 : null"
+>
+  <span class="bonus-die-icon" aria-hidden="true">{{ icon() }}</span>
+  <span class="bonus-die-value">{{ display() }}</span>
+  <span class="bonus-die-caption">BONUS</span>
+</div>

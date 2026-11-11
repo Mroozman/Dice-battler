@@ -1,4 +1,4 @@
-<div class="health-bar" role="img" [attr.aria-label]="ariaLabel()">
+<div class="health-bar" role="img" [attr.aria-label]="ariaLabel()" [attr.data-tooltip]="tooltip()">
   <div class="health-bar-track">
     <div class="health-bar-hp" [style.width.%]="hpPercent()"></div>
     @if (shield() > 0) {

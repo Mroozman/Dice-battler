@@ -4,6 +4,7 @@
       <app-die
         [def]="entry.def"
         [status]="entry.status"
+        [bonus]="bonusFor(entry.def)"
         [interactive]="isInteractive()"
         (activated)="onActivate(entry.def.id)"
       />

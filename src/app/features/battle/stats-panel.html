@@ -1,6 +1,12 @@
 <ul class="stats-panel" aria-label="Statystyki">
   @for (item of items; track item.stat) {
-    <li class="stats-panel-item" [attr.data-stat]="item.stat" [attr.aria-label]="item.label + ': ' + stats()[item.stat]">
+    <li
+      class="stats-panel-item"
+      tabindex="0"
+      [attr.data-stat]="item.stat"
+      [attr.data-tooltip]="item.description"
+      [attr.aria-label]="item.label + ': ' + stats()[item.stat]"
+    >
       <span class="stats-panel-icon" aria-hidden="true">{{ item.icon }}</span>
       <span class="stats-panel-label">{{ item.label }}</span>
       <span class="stats-panel-value">{{ stats()[item.stat] }}</span>

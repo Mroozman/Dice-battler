@@ -7,6 +7,8 @@
   [class.die--selected]="selected()"
   [class.die--discard]="status() === 'discard'"
   [class.die--hand]="status() === 'hand'"
+  [attr.data-tooltip]="tooltip()"
+  [attr.aria-label]="tooltip()"
   [disabled]="!interactive()"
   (click)="onClick()"
 >

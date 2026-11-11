@@ -13,6 +13,20 @@ describe('HandBar', () => {
     TestBed.configureTestingModule({});
   });
 
+  it('passes the matching stat bonus to each die tooltip', () => {
+    const fixture = TestBed.createComponent(HandBar);
+    fixture.componentRef.setInput('hand', [makeDie('a', 'attack'), makeDie('b', 'heal')]);
+    fixture.componentRef.setInput('maxSelectable', 2);
+    fixture.componentRef.setInput('stats', { strength: 2, vitality: 0, defense: 0 });
+    fixture.detectChanges();
+
+    const tooltips = Array.from(fixture.nativeElement.querySelectorAll('.die')).map((el) =>
+      (el as HTMLElement).getAttribute('data-tooltip'),
+    );
+    expect(tooltips[0]).toContain('+2 siły');
+    expect(tooltips[1]).not.toContain('+');
+  });
+
   it('renders one Die per hand entry', () => {
     const fixture = TestBed.createComponent(HandBar);
     fixture.componentRef.setInput('hand', [makeDie('a'), makeDie('b'), makeDie('c')]);

@@ -31,6 +31,16 @@ describe('StatsPanel', () => {
     expect(fixture.nativeElement.querySelector('[data-stat="strength"]').getAttribute('aria-label')).toBe('Siła: 2');
   });
 
+  it('explains each stat in a focusable tooltip', () => {
+    const fixture = TestBed.createComponent(StatsPanel);
+    fixture.componentRef.setInput('stats', { strength: 0, vitality: 0, defense: 0 });
+    fixture.detectChanges();
+
+    const item = fixture.nativeElement.querySelector('[data-stat="strength"]') as HTMLElement;
+    expect(item.getAttribute('data-tooltip')).toBe('+1 do efektu każdej kości ataku');
+    expect(item.tabIndex).toBe(0);
+  });
+
   it('updates when the stats change', () => {
     const fixture = TestBed.createComponent(StatsPanel);
     fixture.componentRef.setInput('stats', { strength: 0, vitality: 0, defense: 0 });

@@ -6,12 +6,13 @@ import { RewardScreen } from './features/reward/reward-screen';
 import { RunOver } from './features/run-over/run-over';
 import { TitleScreen } from './features/title/title-screen';
 import { LevelUpScreen } from './features/level-up/level-up-screen';
+import { TooltipHost } from './ui/tooltip-host';
 import type { DieId } from './domain/model/die';
 import type { StatKind } from './domain/model/stats';
 
 @Component({
   selector: 'app-root',
-  imports: [BattleScreen, StageIntro, RewardScreen, RunOver, TitleScreen, LevelUpScreen],
+  imports: [BattleScreen, StageIntro, RewardScreen, RunOver, TitleScreen, LevelUpScreen, TooltipHost],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })

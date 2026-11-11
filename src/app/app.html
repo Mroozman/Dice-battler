@@ -14,6 +14,7 @@
       [reward]="store.run().pendingReward!"
       [catalog]="store.rewardCatalogView()"
       [playerHp]="store.run().playerHp"
+      [stats]="store.run().stats"
       (swap)="onRewardSwap($event)"
       (skip)="onRewardSkip()"
     />
@@ -35,3 +36,5 @@
     <div class="app-loading">Ładowanie…</div>
   }
 }
+
+<app-tooltip-host />

@@ -20,7 +20,7 @@
 
     <aside class="zone deck" style="grid-area: deck">
       <h2 class="zone-title">Talia</h2>
-      <app-deck-panel [entries]="store.deckView()" />
+      <app-deck-panel [entries]="store.deckView()" [stats]="store.run().stats" />
       <app-stats-panel [stats]="store.run().stats" />
     </aside>
 
@@ -36,6 +36,7 @@
         [staged]="battle.staged"
         [deckPreviewEnabled]="store.enemyDeckVisible()"
         [isBoss]="isBoss()"
+        [stats]="store.run().stats"
         (targetPicked)="onTargetPicked($event)"
       />
     </section>
@@ -51,6 +52,7 @@
         [selection]="battle.selection"
         [canConfirm]="store.canConfirm()"
         [maxSelectable]="store.dicePerTurn"
+        [stats]="store.run().stats"
         (toggled)="onDieToggled($event)"
         (confirmed)="onConfirmed()"
       />

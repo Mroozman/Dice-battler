@@ -11,6 +11,26 @@ describe('Die', () => {
     TestBed.configureTestingModule({});
   });
 
+  it('exposes the effect range as tooltip and accessible name', () => {
+    const fixture = TestBed.createComponent(Die);
+    fixture.componentRef.setInput('def', makeDef('attack'));
+    fixture.detectChanges();
+
+    const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+    expect(button.getAttribute('data-tooltip')).toBe('D6 · atak: 1–6 obrażeń');
+    expect(button.getAttribute('aria-label')).toBe('D6 · atak: 1–6 obrażeń');
+  });
+
+  it('includes the stat bonus and the shifted range in the tooltip', () => {
+    const fixture = TestBed.createComponent(Die);
+    fixture.componentRef.setInput('def', makeDef('attack'));
+    fixture.componentRef.setInput('bonus', 2);
+    fixture.detectChanges();
+
+    const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+    expect(button.getAttribute('data-tooltip')).toBe('D6 · atak: 1–6 obrażeń. +2 siły → 3–8');
+  });
+
   it('renders the label and a kind class', () => {
     const fixture = TestBed.createComponent(Die);
     fixture.componentRef.setInput('def', makeDef('attack'));

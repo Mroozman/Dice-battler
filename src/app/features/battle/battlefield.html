@@ -19,7 +19,10 @@
     }
   </div>
 
-  <app-die-stage [staged]="staged()" />
+  <div class="dice-stage-row">
+    <app-die-stage [staged]="staged()" />
+    <app-bonus-die [bonus]="stagedBonus()" [kind]="stagedKind()" [revealed]="stagedRevealed()" />
+  </div>
 
   <app-combatant-card [combatant]="player()" />
 </div>

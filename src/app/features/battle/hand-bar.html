@@ -3,6 +3,7 @@
     <app-die
       [def]="def"
       [status]="handStatus"
+      [bonus]="bonusFor(def)"
       [selected]="isSelected(def.id)"
       [interactive]="isSelectable(def.id)"
       (activated)="onToggle(def.id)"

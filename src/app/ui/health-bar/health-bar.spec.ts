@@ -1,6 +1,21 @@
 import { TestBed } from '@angular/core/testing';
 import { HealthBar } from './health-bar';
 
+describe('HealthBar tooltip', () => {
+  it('explains hp and shield', () => {
+    TestBed.configureTestingModule({});
+    const fixture = TestBed.createComponent(HealthBar);
+    fixture.componentRef.setInput('hp', 10);
+    fixture.componentRef.setInput('maxHp', 20);
+    fixture.componentRef.setInput('shield', 3);
+    fixture.detectChanges();
+
+    const tooltip = fixture.nativeElement.querySelector('.health-bar').getAttribute('data-tooltip') as string;
+    expect(tooltip).toContain('Zdrowie: 10 z 20');
+    expect(tooltip).toContain('Osłona (3)');
+  });
+});
+
 describe('HealthBar', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({});

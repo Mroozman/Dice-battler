@@ -1,5 +1,7 @@
 import { Component, computed, input } from '@angular/core';
 
+import { healthTooltip } from '../tooltip-text';
+
 function clampPercent(value: number, max: number): number {
   if (max <= 0) {
     return 0;
@@ -19,6 +21,8 @@ export class HealthBar {
 
   readonly hpPercent = computed(() => clampPercent(this.hp(), this.maxHp()));
   readonly shieldPercent = computed(() => clampPercent(this.shield(), this.maxHp()));
+
+  readonly tooltip = computed(() => healthTooltip(this.hp(), this.maxHp(), this.shield()));
 
   readonly ariaLabel = computed(() => {
     const base = `${this.hp()} / ${this.maxHp()}`;
